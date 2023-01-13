@@ -1,9 +1,8 @@
 <template>
   <q-page padding>
     <div v-if="post" class="text-h5">{{post.location}}</div>
-    <!-- {{lineData}}
-    <br><br>
-    {{rangeBarData}} -->
+
+    <br>
 
     <q-form @submit.prevent="getChartData()" class="flex q-gutter-md">
       <q-input v-model="date[0]" filled dense>
@@ -63,15 +62,8 @@
 
     <br>
 
-    <q-card class="q-py-md q-px-lg">
-      <VChart
-        ref="postChart"
-        :option="option"
-        :loading="chartIsLoading"
-        :loading-options="{ text: '', maskColor: 'rgba(255, 255, 255, 0)', lineWidth: 2 }"
-        autoresize
-        class="chart"
-      />
+    <q-card>
+      <VChart ref="postChart" :option="option" :loading="chartLoading" autoresize class="chart" />
     </q-card>
 
   </q-page>
@@ -90,7 +82,7 @@ import { useQuasar } from 'quasar'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 // import { SVGRenderer } from 'echarts/renderers'
-import { LineChart, BarChart, CustomChart } from 'echarts/charts'
+import { LineChart, BarChart } from 'echarts/charts'
 import {
   GridComponent,
   TitleComponent,
@@ -103,17 +95,11 @@ import {
 // import VChart, { THEME_KEY } from 'vue-echarts'
 import VChart from 'vue-echarts'
 
-const authStore = useAuthStore()
-const postsStore = usePostsStore()
-
-const post = computed(() => postsStore.currentPost)
-
 use([
   CanvasRenderer,
   // SVGRenderer,
   LineChart,
   BarChart,
-  CustomChart,
   GridComponent,
   TitleComponent,
   TooltipComponent,
@@ -123,8 +109,12 @@ use([
   ToolboxComponent
 ])
 
+// provide(THEME_KEY, 'dark')
+
 const postChart = ref(null)
-const chartIsLoading = ref(true)
+const chartLoading = ref(false)
+
+const customData = ref([])
 
 const option = ref({
   series: [],
@@ -133,31 +123,37 @@ const option = ref({
   },
   grid: [
     {
-      top: 50,
-      left: 0,
-      bottom: 0,
-      right: 0,
+      left: 60,
+      right: 50,
       height: '20%'
     },
     {
-      top: '50%',
-      left: 0,
-      bottom: 0,
-      right: 0,
+      left: 60,
+      right: 50,
+      top: '40%',
+      height: '20%'
+    },
+    {
+      left: 60,
+      right: 50,
+      top: '40%',
       height: '20%'
     }
   ],
   xAxis: [
     {
       type: 'time',
-      scale: true,
+      // boundaryGap: false,
       axisLine: { onZero: true }
     },
     {
       gridIndex: 1,
-      type: 'time',
-      scale: true,
+      type: 'category',
+      // boundaryGap: false,
       axisLine: { onZero: true }
+    },
+    {
+      gridIndex: 2
     }
   ],
   yAxis: [
@@ -166,9 +162,16 @@ const option = ref({
       type: 'value'
     },
     {
-      show: false,
+      show: true,
       gridIndex: 1,
-      type: 'value'
+      type: 'category'
+      // data: ['ooo']
+    },
+    {
+      show: true,
+      gridIndex: 2,
+      type: 'category',
+      data: ['yy']
     }
   ],
   axisPointer: {
@@ -176,24 +179,16 @@ const option = ref({
   },
   dataZoom: [
     {
-      type: 'inside',
+      show: true,
+      realtime: true,
       filterMode: 'none',
-      xAxisIndex: [0, 1]
+      xAxisIndex: [0, 1, 2]
     },
     {
-      type: 'slider',
+      type: 'inside',
+      realtime: true,
       filterMode: 'none',
-      xAxisIndex: [0, 1],
-      dataBackground: {
-        areaStyle: { opacity: 0 },
-        lineStyle: { opacity: 0 }
-      },
-      selectedDataBackground: {
-        areaStyle: { opacity: 0 },
-        lineStyle: { opacity: 0 }
-      },
-      fillerColor: 'rgba(47,69,84, 1)',
-      brushSelect: false
+      xAxisIndex: [0, 1, 2]
     }
   ],
   tooltip: {
@@ -212,7 +207,11 @@ const option = ref({
   }
 })
 
-const rangeBarData = ref([])
+// ////////////////////////////////////////////
+const authStore = useAuthStore()
+const postsStore = usePostsStore()
+
+const post = computed(() => postsStore.currentPost)
 
 const date = ref([formatDate((new Date() - (24 * 60 * 60 * 1000 * 7))), formatDate(new Date())])
 
@@ -248,7 +247,6 @@ const $q = useQuasar()
 
 async function getChartData () {
   // postChart.value.clear()
-  chartIsLoading.value = true
   try {
     const response = await axios.post('/api', {
       RFI: 14,
@@ -264,49 +262,72 @@ async function getChartData () {
       const newLegend = []
 
       let legendName = ''
+
       let lineColor = ''
       let lineType = ''
+
       let barColor = ''
       let barPattern = ''
 
       for (let i = 0; i < arr.length - 1; i++) {
-        const conStart = arr[i].connection === 't' ? 1 : 0
-        const conEnd = arr[i + 1].connection === 't' ? 1 : 0
+        const connection1 = arr[i].connection === 't' ? 1 : 0
+        const connection2 = arr[i + 1].connection === 't' ? 1 : 0
+
         if (arr[i + 1].conn_to_db === '-1') {
           legendName = 'Сервер не работал'
+          // line
           lineType = 'dashed'
           lineColor = 'grey'
+          // bar
           barPattern = 'arrow'
           barColor = 'grey'
         } else {
           if (arr[i].conn_to_db === '0') {
             legendName = 'Нет связи с БД'
+            // line
             lineType = 'dotted'
             lineColor = 'grey'
+            // bar
             barPattern = 'circle'
             barColor = 'grey'
           } else {
             legendName = 'Всё хорошо'
             if (arr[i].connection === 't') {
+              // line
               lineType = 'solid'
-              lineColor = '#00A19D'
+              lineColor = 'cyan'
+              // bar
               barPattern = 'none'
-              barColor = '#00A19D'
+              barColor = 'green'
             } else if (arr[i].connection === 'f') {
+              // line
               lineType = 'solid'
-              lineColor = '#00A19D'
+              lineColor = 'red'
+              // bar
               barPattern = 'none'
-              barColor = '#E05D5D'
+              barColor = 'red'
             }
           }
         }
 
+        customData.value.push([arr[i].date_of_change, arr[i + 1].date_of_change, connection1, barColor])
+        
+
+        newLegend.push({
+          name: legendName,
+          itemStyle: {
+            opacity: 0
+          },
+          lineStyle: {
+            color: lineColor
+          }
+        })
         newSeries.push({
           name: legendName,
           type: 'line',
-          data: [[arr[i].date_of_change, conStart], [arr[i + 1].date_of_change, conEnd]],
-          clip: false,
           step: 'end',
+          clip: false,
+          data: [[arr[i].date_of_change, connection1], [arr[i + 1].date_of_change, connection2]],
           itemStyle: {
             color: '#00e5ff'
           },
@@ -315,93 +336,53 @@ async function getChartData () {
             color: lineColor
           }
         })
-
-        // lineData.value.push([
-        //   [arr[i].date_of_change, conStart],
-        //   [arr[i + 1].date_of_change, conEnd]
-        // ])
-        rangeBarData.value.push([
-          arr[i].date_of_change,
-          arr[i + 1].date_of_change,
-          barColor,
-          barPattern,
-          legendName
-        ])
-
-        newLegend.push({
+        newSeries.push({
           name: legendName,
+          type: 'bar',
+          // stack: 'all',
+          // barGap: 0,
+          xAxisIndex: 1,
+          yAxisIndex: 1,
+          clip: false,
+          data: [[arr[i].date_of_change, arr[i + 1].date_of_change], connection1],
           itemStyle: {
-            opacity: 0
-          },
-          lineStyle: {
-            // color: lineColor
+            color: barColor,
+            decal: { symbol: barPattern }
           }
+        })
+        newSeries.push({
+          name: legendName,
+          type: 'custom',
+          renderItem: renderItem,
+          // stack: 'all',
+          // barGap: 0,
+          xAxisIndex: 2,
+          yAxisIndex: 2,
+          clip: false,
+          data: [[arr[i].date_of_change, arr[i + 1].date_of_change], connection1],
+          itemStyle: {
+            color: barColor,
+            decal: { symbol: barPattern }
+          },
+          encode: {
+            x: [1, 2],
+            y: 1
+          },
+          data: data
         })
       }
 
-      // lineData.value = rangeBarData.value.map(function (item, index) {
-      //   return {
-      //     value: item
-      //   }
-      // })
-      rangeBarData.value = rangeBarData.value.map(function (item, index) {
-        return {
-          value: item,
-          itemStyle: {
-            color: item[2],
-            decal: {
-              symbol: item[3]
-            }
-          }
-        }
-      })
-
-      newSeries.push({
-        name: legendName,
-        type: 'custom',
-        data: rangeBarData.value,
-        clip: false,
-        renderItem: function (params, api) {
-          const start = api.coord([api.value(0), 1])
-          const size = api.size([api.value(1) - api.value(0), 1])
-          return {
-            type: 'rect',
-            transition: ['shape'],
-            shape: {
-              x: start[0],
-              y: start[1],
-              width: size[0],
-              height: size[1]
-            },
-            style: {
-              fill: api.visual('color'),
-              decal: api.visual('decal')
-            }
-          }
-        },
-        dimensions: ['с', 'по', 'связь'],
-        encode: {
-          x: [0, 1],
-          // y: 2,
-          tooltip: [0, 1, 2, 3, 4],
-          itemName: 4
-        },
-        xAxisIndex: 1,
-        yAxisIndex: 1
-      })
-
       postChart.value.setOption(
         {
-          // legend: {
-          //   data: newLegend
-          // },
+          legend: {
+            data: newLegend
+          },
           series: newSeries
         },
         {
           replaceMerge: ['legend', 'series']
         }
       )
-      chartIsLoading.value = false
     } else if (response.data.NUM_ERR === -1) {
       console.error(response.data.__ERR)
     } else if (response.data.NUM_ERR === -2) {
