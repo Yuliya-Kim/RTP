@@ -1,16 +1,13 @@
 <template>
   <q-page padding>
     <div v-if="post" class="text-h5">{{post.location}}</div>
-    <!-- {{lineData}}
-    <br><br>
-    {{rangeBarData}} -->
 
     <q-form @submit.prevent="getChartData()" class="flex q-gutter-md">
-      <q-input v-model="date[0]" filled dense>
+      <q-input v-model="chartDate[0]" filled dense>
         <template v-slot:prepend>
           <q-icon name="event" class="cursor-pointer">
             <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-              <q-date v-model="date[0]" mask="YYYY-MM-DD HH:mm:ss">
+              <q-date v-model="chartDate[0]" mask="YYYY-MM-DD HH:mm:ss">
                 <div class="row items-center justify-end">
                   <!-- <q-btn v-close-popup label="Close" color="primary" flat /> -->
                 </div>
@@ -22,7 +19,7 @@
         <template v-slot:append>
           <q-icon name="access_time" class="cursor-pointer">
             <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-              <q-time v-model="date[0]" mask="YYYY-MM-DD HH:mm:ss" format24h>
+              <q-time v-model="chartDate[0]" mask="YYYY-MM-DD HH:mm:ss" format24h>
                 <div class="row items-center justify-end">
                   <!-- <q-btn v-close-popup label="Close" color="primary" flat /> -->
                 </div>
@@ -32,11 +29,11 @@
         </template>
       </q-input>
 
-      <q-input v-model="date[1]" filled  dense>
+      <q-input v-model="chartDate[1]" filled  dense>
         <template v-slot:prepend>
           <q-icon name="event" class="cursor-pointer">
             <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-              <q-date v-model="date[1]" mask="YYYY-MM-DD HH:mm:ss">
+              <q-date v-model="chartDate[1]" mask="YYYY-MM-DD HH:mm:ss">
                 <div class="row items-center justify-end">
                   <!-- <q-btn v-close-popup label="Close" color="primary" flat /> -->
                 </div>
@@ -48,7 +45,7 @@
         <template v-slot:append>
           <q-icon name="access_time" class="cursor-pointer">
             <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-              <q-time v-model="date[1]" mask="YYYY-MM-DD HH:mm:ss" format24h>
+              <q-time v-model="chartDate[1]" mask="YYYY-MM-DD HH:mm:ss" format24h>
                 <div class="row items-center justify-end">
                   <!-- <q-btn v-close-popup label="Close" color="primary" flat /> -->
                 </div>
@@ -66,6 +63,7 @@
     <q-card class="q-py-md q-px-lg">
       <VChart
         ref="postChart"
+        :init-options="initOptions"
         :option="option"
         :loading="chartIsLoading"
         :loading-options="{ text: '', maskColor: 'rgba(255, 255, 255, 0)', lineWidth: 2 }"
@@ -78,14 +76,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, provide } from 'vue'
 import { onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router'
 
 import { useAuthStore } from '../stores/auth'
 import { usePostsStore } from '../stores/posts'
 
 import { axios } from 'boot/axios'
-import { useQuasar } from 'quasar'
+import { useQuasar, date } from 'quasar'
 
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -100,8 +98,11 @@ import {
   DataZoomComponent,
   ToolboxComponent
 } from 'echarts/components'
-// import VChart, { THEME_KEY } from 'vue-echarts'
-import VChart from 'vue-echarts'
+import 'echarts/theme/dark2'
+import VChart, { THEME_KEY } from 'vue-echarts'
+// import VChart from 'vue-echarts'
+
+import 'echarts/i18n/langRU'
 
 const authStore = useAuthStore()
 const postsStore = usePostsStore()
@@ -123,8 +124,14 @@ use([
   ToolboxComponent
 ])
 
+provide(THEME_KEY, 'dark2')
+
 const postChart = ref(null)
 const chartIsLoading = ref(true)
+
+const initOptions = {
+  locale: 'RU'
+}
 
 const option = ref({
   series: [],
@@ -144,20 +151,42 @@ const option = ref({
       left: 0,
       bottom: 0,
       right: 0,
-      height: '20%'
+      height: '15%'
     }
   ],
   xAxis: [
     {
       type: 'time',
-      scale: true,
-      axisLine: { onZero: true }
+      axisLine: { onZero: true },
+      axisLabel: {
+        formatter: {
+          year: '{yyyy}',
+          month: '{MMM}',
+          day: '{d} {MMM}',
+          hour: '{HH}:{mm}',
+          minute: '{HH}:{mm}',
+          second: '{HH}:{mm}:{ss}',
+          millisecond: '{hh}:{mm}:{ss} {SSS}',
+          none: '{yyyy}-{MM}-{dd} {hh}:{mm}:{ss} {SSS}'
+        }
+      }
     },
     {
       gridIndex: 1,
       type: 'time',
-      scale: true,
-      axisLine: { onZero: true }
+      // axisLine: { onZero: true },
+      axisLabel: {
+        formatter: {
+          year: '{yyyy}',
+          month: '{MMM}',
+          day: '{d} {MMM}',
+          hour: '{HH}:{mm}',
+          minute: '{HH}:{mm}',
+          second: '{HH}:{mm}:{ss}',
+          millisecond: '{hh}:{mm}:{ss} {SSS}',
+          none: '{yyyy}-{MM}-{dd} {hh}:{mm}:{ss} {SSS}'
+        }
+      }
     }
   ],
   yAxis: [
@@ -172,6 +201,7 @@ const option = ref({
     }
   ],
   axisPointer: {
+    type: 'line',
     link: [{ xAxisIndex: 'all' }]
   },
   dataZoom: [
@@ -197,16 +227,14 @@ const option = ref({
     }
   ],
   tooltip: {
-    trigger: 'item',
-    axisPointer: {
-      animation: false
-    }
+    trigger: 'axis'
   },
   toolbox: {
     feature: {
       dataZoom: {
         yAxisIndex: 'none'
       },
+      dataView: {},
       restore: {}
     }
   }
@@ -214,48 +242,22 @@ const option = ref({
 
 const rangeBarData = ref([])
 
-const date = ref([formatDate((new Date() - (24 * 60 * 60 * 1000 * 7))), formatDate(new Date())])
-
-function formatDate (date) {
-  const d = new Date(date)
-  //
-  const year = d.getFullYear()
-
-  let month = '' + (d.getMonth() + 1)
-  month = month.length < 2 ? '0' + month : month
-
-  let day = '' + d.getDate()
-  day = day.length < 2 ? '0' + day : day
-
-  const newDate = [year, month, day].join('-')
-
-  //
-  let hours = '' + d.getHours()
-  hours = hours.length < 2 ? '0' + hours : hours
-
-  let minutes = '' + d.getMinutes()
-  minutes = minutes.length < 2 ? '0' + minutes : minutes
-
-  let seconds = '' + d.getSeconds()
-  seconds = seconds.length < 2 ? '0' + seconds : seconds
-
-  const newTime = [hours, minutes, seconds].join(':')
-
-  return newDate + ' ' + newTime
-}
+const chartDate = ref([
+  date.formatDate(date.subtractFromDate(new Date(), { days: 7 }), 'YYYY-MM-DD HH:mm:ss'),
+  date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss')
+])
 
 const $q = useQuasar()
 
 async function getChartData () {
-  // postChart.value.clear()
   chartIsLoading.value = true
   try {
     const response = await axios.post('/api', {
       RFI: 14,
       token: authStore.token,
       id: postsStore.currentPost.apk_id,
-      begin_date: date.value[0],
-      end_date: date.value[1]
+      begin_date: chartDate.value[0],
+      end_date: chartDate.value[1]
     })
     if (response.data.RC === 0) {
       const arr = response.data.statistics
@@ -268,6 +270,8 @@ async function getChartData () {
       let lineType = ''
       let barColor = ''
       let barPattern = ''
+      let barPatternDashX = ''
+      let barPatternDashY = ''
 
       for (let i = 0; i < arr.length - 1; i++) {
         const conStart = arr[i].connection === 't' ? 1 : 0
@@ -276,15 +280,19 @@ async function getChartData () {
           legendName = 'Сервер не работал'
           lineType = 'dashed'
           lineColor = 'grey'
-          barPattern = 'arrow'
-          barColor = 'grey'
+          barPattern = 'rect'
+          barColor = 'rgba(255, 0, 0, 0)'
+          barPatternDashX = [[8, 4]]
+          barPatternDashY = [2, 8]
         } else {
           if (arr[i].conn_to_db === '0') {
             legendName = 'Нет связи с БД'
             lineType = 'dotted'
             lineColor = 'grey'
-            barPattern = 'circle'
-            barColor = 'grey'
+            barPattern = 'rect'
+            barColor = 'rgba(255, 0, 0, 0)'
+            barPatternDashX = [2, 2]
+            barPatternDashY = [2, 2]
           } else {
             legendName = 'Всё хорошо'
             if (arr[i].connection === 't') {
@@ -308,25 +316,55 @@ async function getChartData () {
           clip: false,
           step: 'end',
           itemStyle: {
-            color: '#00e5ff'
+            color: '#00A19D'
           },
           lineStyle: {
             type: lineType,
             color: lineColor
+          },
+          tooltip: {
+            trigger: 'item',
+            formatter: function (params, ticket, callback) {
+              const connection = params.value[1] === 1 ? 'НОРМА' : 'ОШИБКА'
+              const connectionTextColor = connection === 'НОРМА' ? 'text-green' : connection === 'ОШИБКА' ? 'text-pink' : 'text-grey-8'
+              const startDate = date.formatDate(params.value[0], 'DD MMM, HH:mm:ss')
+              return `
+              <div>
+                <div>
+                  <span>Связь: </span>
+                  <span class="text-weight-bold ${connectionTextColor}">${connection}</span>
+                </div>
+                <hr size="1" color="lightgrey" noshade>
+                <div class="flex justify-between">
+                  <span>Дата: </span>
+                  <span>${startDate}</span>
+                </div>
+              </div>
+              `
+            },
+            textStyle: {
+              fontFamily: 'sans-serif'
+            }
           }
         })
 
-        // lineData.value.push([
-        //   [arr[i].date_of_change, conStart],
-        //   [arr[i + 1].date_of_change, conEnd]
-        // ])
-        rangeBarData.value.push([
-          arr[i].date_of_change,
-          arr[i + 1].date_of_change,
-          barColor,
-          barPattern,
-          legendName
-        ])
+        rangeBarData.value.push({
+          value: [
+            arr[i].date_of_change,
+            arr[i + 1].date_of_change,
+            barColor,
+            legendName
+          ],
+          itemStyle: {
+            color: barColor,
+            decal: {
+              symbol: barPattern,
+              color: '#797979',
+              dashArrayX: barPatternDashX,
+              dashArrayY: barPatternDashY
+            }
+          }
+        })
 
         newLegend.push({
           name: legendName,
@@ -334,27 +372,10 @@ async function getChartData () {
             opacity: 0
           },
           lineStyle: {
-            // color: lineColor
+            color: lineColor
           }
         })
       }
-
-      // lineData.value = rangeBarData.value.map(function (item, index) {
-      //   return {
-      //     value: item
-      //   }
-      // })
-      rangeBarData.value = rangeBarData.value.map(function (item, index) {
-        return {
-          value: item,
-          itemStyle: {
-            color: item[2],
-            decal: {
-              symbol: item[3]
-            }
-          }
-        }
-      })
 
       newSeries.push({
         name: legendName,
@@ -381,15 +402,118 @@ async function getChartData () {
         },
         dimensions: ['с', 'по', 'связь'],
         encode: {
-          x: [0, 1],
+          x: [0, 1, 2, 3]
           // y: 2,
-          tooltip: [0, 1, 2, 3, 4],
-          itemName: 4
+          // tooltip: [0, 1, 2, 3, 4],
+          // itemName: 4
         },
         xAxisIndex: 1,
-        yAxisIndex: 1
-      })
+        yAxisIndex: 1,
+        tooltip: {
+          trigger: 'item',
+          formatter: function (params, ticket, callback) {
+            const connection = params.value[2] === '#00A19D' ? 'НОРМА' : params.value[2] === '#E05D5D' ? 'ОШИБКА' : 'НЕИЗВЕСТНА'
+            const connectionTextColor = connection === 'НОРМА' ? 'text-green' : connection === 'ОШИБКА' ? 'text-pink' : 'text-grey-8'
 
+            const noConnectionReason = connection === 'НЕИЗВЕСТНА' ? params.value[params.encode.x[3]] : ''
+
+            const startDate = date.formatDate(params.value[0], 'DD MMM, HH:mm:ss')
+            const endDate = date.formatDate(params.value[1], 'DD MMM, HH:mm:ss')
+
+            const difference = new Date(params.value[1]) - new Date(params.value[0])
+
+            const durationDay = Math.trunc((difference / ((1000 * 3600))) / 24)
+
+            const duration = new Date(difference - 10800000)
+
+            const durationHours = duration.getHours()
+            const durationMinutes = duration.getMinutes()
+            const durationSeconds = duration.getSeconds()
+
+            let formattedDuration = ''
+
+            if (durationDay === 0) {
+              if (durationHours === 0) {
+                if (durationMinutes !== 0 && durationSeconds !== 0) {
+                  formattedDuration = durationMinutes + 'м' + ' ' + durationSeconds + 'c'
+                }
+                if (durationMinutes !== 0 && durationSeconds === 0) {
+                  formattedDuration = durationMinutes + 'м'
+                }
+                if (durationMinutes === 0 && durationSeconds !== 0) {
+                  formattedDuration = durationSeconds + 'c'
+                }
+              } else if (durationHours !== 0) {
+                if (durationMinutes === 0 && durationSeconds === 0) {
+                  formattedDuration = durationHours + 'ч'
+                }
+                if (durationMinutes !== 0 && durationSeconds === 0) {
+                  formattedDuration = durationHours + 'ч' + ' ' + durationMinutes + 'м'
+                }
+                if (durationMinutes === 0 && durationSeconds !== 0) {
+                  formattedDuration = durationHours + 'ч' + ' ' + durationSeconds + 'с'
+                }
+                if (durationMinutes !== 0 && durationSeconds !== 0) {
+                  formattedDuration = durationHours + 'ч' + ' ' + durationMinutes + 'м' + ' ' + durationSeconds + 'с'
+                }
+              }
+            } else if (durationDay !== 0) {
+              if (durationHours === 0) {
+                if (durationMinutes !== 0 && durationSeconds !== 0) {
+                  formattedDuration = durationDay + 'д' + ' ' + durationMinutes + 'м' + ' ' + durationSeconds + 'c'
+                }
+                if (durationMinutes !== 0 && durationSeconds === 0) {
+                  formattedDuration = durationDay + 'д' + ' ' + durationMinutes + 'м'
+                }
+                if (durationMinutes === 0 && durationSeconds !== 0) {
+                  formattedDuration = durationDay + 'д' + ' ' + durationSeconds + 'c'
+                }
+              } else if (durationHours !== 0) {
+                if (durationMinutes === 0 && durationSeconds === 0) {
+                  formattedDuration = durationDay + 'д' + ' ' + durationHours + 'ч'
+                }
+                if (durationMinutes !== 0 && durationSeconds === 0) {
+                  formattedDuration = durationDay + 'д' + ' ' + durationHours + 'ч' + ' ' + durationMinutes + 'м'
+                }
+                if (durationMinutes === 0 && durationSeconds !== 0) {
+                  formattedDuration = durationDay + 'д' + ' ' + durationHours + 'ч' + ' ' + durationSeconds + 'с'
+                }
+                if (durationMinutes !== 0 && durationSeconds !== 0) {
+                  formattedDuration = durationDay + 'д' + ' ' + durationHours + 'ч' + ' ' + durationMinutes + 'м' + ' ' + durationSeconds + 'с'
+                }
+              }
+            }
+            return `
+            <div>
+              <div>
+                <span>Связь: </span>
+                <span class="text-weight-bold ${connectionTextColor}">${connection}</span>
+              </div>
+              <div>
+                <div style="line-height: 100%; border-left: 3px solid Tomato " class="q-pl-xs">${noConnectionReason}</div>
+              </div>
+              <hr size="1" color="lightgrey" noshade>
+              <div class="flex justify-between">
+                <span>Начало периода: </span>
+                <span>${startDate}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Конец периода: </span>
+                <span>${endDate}</span>
+              </div>
+              <div>
+                <span>Продолжительность: </span>
+                <span>${formattedDuration}</span>
+              </div>
+            </div>
+            `
+          },
+          textStyle: {
+            fontFamily: 'sans-serif'
+          }
+        }
+      })
+      // postChart.value.registerTheme('dark(1)', )
       postChart.value.setOption(
         {
           // legend: {
