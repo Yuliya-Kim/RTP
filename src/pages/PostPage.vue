@@ -1,16 +1,13 @@
 <template>
   <q-page padding>
     <div v-if="post" class="text-h5">{{post.location}}</div>
-    <!-- {{lineData}}
-    <br><br>
-    {{rangeBarData}} -->
 
     <q-form @submit.prevent="getChartData()" class="flex q-gutter-md">
-      <q-input v-model="date[0]" filled dense>
+      <q-input v-model="chartDate[0]" filled dense>
         <template v-slot:prepend>
           <q-icon name="event" class="cursor-pointer">
             <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-              <q-date v-model="date[0]" mask="YYYY-MM-DD HH:mm:ss">
+              <q-date v-model="chartDate[0]" mask="YYYY-MM-DD HH:mm:ss">
                 <div class="row items-center justify-end">
                   <!-- <q-btn v-close-popup label="Close" color="primary" flat /> -->
                 </div>
@@ -22,7 +19,7 @@
         <template v-slot:append>
           <q-icon name="access_time" class="cursor-pointer">
             <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-              <q-time v-model="date[0]" mask="YYYY-MM-DD HH:mm:ss" format24h>
+              <q-time v-model="chartDate[0]" mask="YYYY-MM-DD HH:mm:ss" format24h>
                 <div class="row items-center justify-end">
                   <!-- <q-btn v-close-popup label="Close" color="primary" flat /> -->
                 </div>
@@ -32,11 +29,11 @@
         </template>
       </q-input>
 
-      <q-input v-model="date[1]" filled  dense>
+      <q-input v-model="chartDate[1]" filled  dense>
         <template v-slot:prepend>
           <q-icon name="event" class="cursor-pointer">
             <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-              <q-date v-model="date[1]" mask="YYYY-MM-DD HH:mm:ss">
+              <q-date v-model="chartDate[1]" mask="YYYY-MM-DD HH:mm:ss">
                 <div class="row items-center justify-end">
                   <!-- <q-btn v-close-popup label="Close" color="primary" flat /> -->
                 </div>
@@ -48,7 +45,7 @@
         <template v-slot:append>
           <q-icon name="access_time" class="cursor-pointer">
             <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-              <q-time v-model="date[1]" mask="YYYY-MM-DD HH:mm:ss" format24h>
+              <q-time v-model="chartDate[1]" mask="YYYY-MM-DD HH:mm:ss" format24h>
                 <div class="row items-center justify-end">
                   <!-- <q-btn v-close-popup label="Close" color="primary" flat /> -->
                 </div>
@@ -66,6 +63,7 @@
     <q-card class="q-py-md q-px-lg">
       <VChart
         ref="postChart"
+        :init-options="initOptions"
         :option="option"
         :loading="chartIsLoading"
         :loading-options="{ text: '', maskColor: 'rgba(255, 255, 255, 0)', lineWidth: 2 }"
@@ -78,14 +76,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, provide } from 'vue'
 import { onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router'
 
 import { useAuthStore } from '../stores/auth'
 import { usePostsStore } from '../stores/posts'
 
 import { axios } from 'boot/axios'
-import { useQuasar } from 'quasar'
+import { useQuasar, date } from 'quasar'
 
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -100,8 +98,11 @@ import {
   DataZoomComponent,
   ToolboxComponent
 } from 'echarts/components'
-// import VChart, { THEME_KEY } from 'vue-echarts'
-import VChart from 'vue-echarts'
+import 'echarts/theme/dark2'
+import VChart, { THEME_KEY } from 'vue-echarts'
+// import VChart from 'vue-echarts'
+
+import 'echarts/i18n/langRU'
 
 const authStore = useAuthStore()
 const postsStore = usePostsStore()
@@ -123,8 +124,14 @@ use([
   ToolboxComponent
 ])
 
+provide(THEME_KEY, 'dark2')
+
 const postChart = ref(null)
 const chartIsLoading = ref(true)
+
+const initOptions = {
+  locale: 'RU'
+}
 
 const option = ref({
   series: [],
@@ -133,129 +140,88 @@ const option = ref({
   },
   grid: [
     {
-      top: 50,
       left: 0,
-      bottom: 0,
-      right: 0,
-      height: '20%'
-    },
-    {
-      top: '50%',
-      left: 0,
-      bottom: 0,
-      right: 0,
-      height: '20%'
+      right: 0
     }
   ],
   xAxis: [
     {
       type: 'time',
-      scale: true,
-      axisLine: { onZero: true }
-    },
-    {
-      gridIndex: 1,
-      type: 'time',
-      scale: true,
-      axisLine: { onZero: true }
+      axisLabel: {
+        formatter: {
+          year: '{yyyy}',
+          month: '{MMM}',
+          day: '{d} {MMM}',
+          hour: '{HH}:{mm}',
+          minute: '{HH}:{mm}',
+          second: '{HH}:{mm}:{ss}',
+          millisecond: '{hh}:{mm}:{ss} {SSS}',
+          none: '{yyyy}-{MM}-{dd} {hh}:{mm}:{ss} {SSS}'
+        }
+      }
     }
   ],
   yAxis: [
     {
       show: false,
       type: 'value'
-    },
-    {
-      show: false,
-      gridIndex: 1,
-      type: 'value'
     }
   ],
   axisPointer: {
-    link: [{ xAxisIndex: 'all' }]
+    type: 'line'
   },
   dataZoom: [
     {
       type: 'inside',
-      filterMode: 'none',
-      xAxisIndex: [0, 1]
-    },
-    {
-      type: 'slider',
-      filterMode: 'none',
-      xAxisIndex: [0, 1],
-      dataBackground: {
-        areaStyle: { opacity: 0 },
-        lineStyle: { opacity: 0 }
-      },
-      selectedDataBackground: {
-        areaStyle: { opacity: 0 },
-        lineStyle: { opacity: 0 }
-      },
-      fillerColor: 'rgba(47,69,84, 1)',
-      brushSelect: false
+      filterMode: 'none'
     }
+    // {
+    //   type: 'slider',
+    //   filterMode: 'none',
+    //   dataBackground: {
+    //     areaStyle: { opacity: 0 },
+    //     lineStyle: { opacity: 0 }
+    //   },
+    //   selectedDataBackground: {
+    //     areaStyle: { opacity: 0 },
+    //     lineStyle: { opacity: 0 }
+    //   },
+    //   fillerColor: 'rgba(47,69,84, 1)',
+    //   brushSelect: false
+    // }
   ],
   tooltip: {
-    trigger: 'item',
-    axisPointer: {
-      animation: false
-    }
+    trigger: 'axis'
   },
   toolbox: {
     feature: {
       dataZoom: {
         yAxisIndex: 'none'
       },
+      dataView: {},
       restore: {}
     }
   }
 })
 
-const rangeBarData = ref([])
+// const rangeBarData = ref([])
 
-const date = ref([formatDate((new Date() - (24 * 60 * 60 * 1000 * 7))), formatDate(new Date())])
-
-function formatDate (date) {
-  const d = new Date(date)
-  //
-  const year = d.getFullYear()
-
-  let month = '' + (d.getMonth() + 1)
-  month = month.length < 2 ? '0' + month : month
-
-  let day = '' + d.getDate()
-  day = day.length < 2 ? '0' + day : day
-
-  const newDate = [year, month, day].join('-')
-
-  //
-  let hours = '' + d.getHours()
-  hours = hours.length < 2 ? '0' + hours : hours
-
-  let minutes = '' + d.getMinutes()
-  minutes = minutes.length < 2 ? '0' + minutes : minutes
-
-  let seconds = '' + d.getSeconds()
-  seconds = seconds.length < 2 ? '0' + seconds : seconds
-
-  const newTime = [hours, minutes, seconds].join(':')
-
-  return newDate + ' ' + newTime
-}
+const chartDate = ref([
+  date.formatDate(date.subtractFromDate(new Date(), { days: 7 }), 'YYYY-MM-DD HH:mm:ss'),
+  date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss')
+])
 
 const $q = useQuasar()
 
 async function getChartData () {
-  // postChart.value.clear()
   chartIsLoading.value = true
   try {
     const response = await axios.post('/api', {
       RFI: 14,
       token: authStore.token,
       id: postsStore.currentPost.apk_id,
-      begin_date: date.value[0],
-      end_date: date.value[1]
+      begin_date: chartDate.value[0],
+      end_date: chartDate.value[1]
     })
     if (response.data.RC === 0) {
       const arr = response.data.statistics
@@ -263,138 +229,210 @@ async function getChartData () {
       const newSeries = []
       const newLegend = []
 
-      let legendName = ''
-      let lineColor = ''
-      let lineType = ''
-      let barColor = ''
-      let barPattern = ''
+      let connectionStatus, legendName
+      let barColor, barPattern, barPatternDashX, barPatternDashY
 
       for (let i = 0; i < arr.length - 1; i++) {
-        const conStart = arr[i].connection === 't' ? 1 : 0
-        const conEnd = arr[i + 1].connection === 't' ? 1 : 0
         if (arr[i + 1].conn_to_db === '-1') {
-          legendName = 'Сервер не работал'
-          lineType = 'dashed'
-          lineColor = 'grey'
-          barPattern = 'arrow'
-          barColor = 'grey'
+          connectionStatus = 'НЕИЗВЕСТНА'
+          legendName = 'Связь неизвестна: сервер не работал'
+          barPattern = 'rect'
+          barColor = 'rgba(255, 0, 0, 0)'
+          barPatternDashX = [[8, 4]]
+          barPatternDashY = [2, 8]
         } else {
           if (arr[i].conn_to_db === '0') {
-            legendName = 'Нет связи с БД'
-            lineType = 'dotted'
-            lineColor = 'grey'
-            barPattern = 'circle'
-            barColor = 'grey'
+            connectionStatus = 'НЕИЗВЕСТНА'
+            legendName = 'Связь неизвестна: не было связи с БД'
+            barPattern = 'rect'
+            barColor = 'rgba(255, 0, 0, 0)'
+            barPatternDashX = [2, 2]
+            barPatternDashY = [2, 2]
           } else {
-            legendName = 'Всё хорошо'
+            connectionStatus = 'Всё хорошо'
             if (arr[i].connection === 't') {
-              lineType = 'solid'
-              lineColor = '#00A19D'
+              connectionStatus = 'АКТИВНА'
+              legendName = 'Связь активна'
               barPattern = 'none'
               barColor = '#00A19D'
             } else if (arr[i].connection === 'f') {
-              lineType = 'solid'
-              lineColor = '#00A19D'
+              connectionStatus = 'НЕАКТИВНА'
+              legendName = 'Связь неактивна'
               barPattern = 'none'
               barColor = '#E05D5D'
             }
           }
         }
-
+        //
+        const dataObject = [{
+          name: legendName,
+          value: [
+            arr[i].date_of_change,
+            arr[i + 1].date_of_change,
+            connectionStatus,
+            legendName
+          ],
+          itemStyle: {
+            color: barColor,
+            decal: {
+              symbol: barPattern,
+              color: '#797979',
+              dashArrayX: barPatternDashX,
+              dashArrayY: barPatternDashY
+            }
+          }
+        }]
+        //
         newSeries.push({
           name: legendName,
-          type: 'line',
-          data: [[arr[i].date_of_change, conStart], [arr[i + 1].date_of_change, conEnd]],
+          type: 'custom',
+          data: dataObject,
           clip: false,
-          step: 'end',
-          itemStyle: {
-            color: '#00e5ff'
+          renderItem: function (params, api) {
+            const start = api.coord([api.value(0), 1])
+            const size = api.size([api.value(1) - api.value(0), 1])
+            return {
+              type: 'rect',
+              transition: ['shape'],
+              shape: {
+                x: start[0],
+                y: start[1],
+                width: size[0],
+                height: size[1]
+              },
+              style: {
+                fill: api.visual('color'),
+                decal: api.visual('decal')
+              }
+            }
           },
-          lineStyle: {
-            type: lineType,
-            color: lineColor
+          encode: {
+            x: [0, 1, 2, 3]
+          },
+          tooltip: {
+            trigger: 'item',
+            formatter: function (params, ticket, callback) {
+              const connectionTextColor = params.value[2] === 'АКТИВНА' ? 'text-green' : params.value[2] === 'НЕАКТИВНА' ? 'text-pink' : 'text-grey-8'
+              const noConnectionReason = params.value[2] === 'НЕИЗВЕСТНА' ? params.value[params.encode.x[3]] : ''
+
+              const startDate = date.formatDate(params.value[0], 'DD MMM, HH:mm:ss')
+              const endDate = date.formatDate(params.value[1], 'DD MMM, HH:mm:ss')
+
+              const difference = new Date(params.value[1]) - new Date(params.value[0])
+              const durationDay = Math.trunc((difference / ((1000 * 3600))) / 24)
+              const duration = new Date(difference - 10800000)
+
+              const durationHours = duration.getHours()
+              const durationMinutes = duration.getMinutes()
+              const durationSeconds = duration.getSeconds()
+
+              let formattedDuration = ''
+              if (durationDay === 0) {
+                if (durationHours === 0) {
+                  if (durationMinutes !== 0 && durationSeconds !== 0) {
+                    formattedDuration = durationMinutes + 'м' + ' ' + durationSeconds + 'c'
+                  }
+                  if (durationMinutes !== 0 && durationSeconds === 0) {
+                    formattedDuration = durationMinutes + 'м'
+                  }
+                  if (durationMinutes === 0 && durationSeconds !== 0) {
+                    formattedDuration = durationSeconds + 'c'
+                  }
+                } else if (durationHours !== 0) {
+                  if (durationMinutes === 0 && durationSeconds === 0) {
+                    formattedDuration = durationHours + 'ч'
+                  }
+                  if (durationMinutes !== 0 && durationSeconds === 0) {
+                    formattedDuration = durationHours + 'ч' + ' ' + durationMinutes + 'м'
+                  }
+                  if (durationMinutes === 0 && durationSeconds !== 0) {
+                    formattedDuration = durationHours + 'ч' + ' ' + durationSeconds + 'с'
+                  }
+                  if (durationMinutes !== 0 && durationSeconds !== 0) {
+                    formattedDuration = durationHours + 'ч' + ' ' + durationMinutes + 'м' + ' ' + durationSeconds + 'с'
+                  }
+                }
+              } else if (durationDay !== 0) {
+                if (durationHours === 0) {
+                  if (durationMinutes !== 0 && durationSeconds !== 0) {
+                    formattedDuration = durationDay + 'д' + ' ' + durationMinutes + 'м' + ' ' + durationSeconds + 'c'
+                  }
+                  if (durationMinutes !== 0 && durationSeconds === 0) {
+                    formattedDuration = durationDay + 'д' + ' ' + durationMinutes + 'м'
+                  }
+                  if (durationMinutes === 0 && durationSeconds !== 0) {
+                    formattedDuration = durationDay + 'д' + ' ' + durationSeconds + 'c'
+                  }
+                } else if (durationHours !== 0) {
+                  if (durationMinutes === 0 && durationSeconds === 0) {
+                    formattedDuration = durationDay + 'д' + ' ' + durationHours + 'ч'
+                  }
+                  if (durationMinutes !== 0 && durationSeconds === 0) {
+                    formattedDuration = durationDay + 'д' + ' ' + durationHours + 'ч' + ' ' + durationMinutes + 'м'
+                  }
+                  if (durationMinutes === 0 && durationSeconds !== 0) {
+                    formattedDuration = durationDay + 'д' + ' ' + durationHours + 'ч' + ' ' + durationSeconds + 'с'
+                  }
+                  if (durationMinutes !== 0 && durationSeconds !== 0) {
+                    formattedDuration = durationDay + 'д' + ' ' + durationHours + 'ч' + ' ' + durationMinutes + 'м' + ' ' + durationSeconds + 'с'
+                  }
+                }
+              }
+              return `
+              <div>
+                <div>
+                  <span>Связь: </span>
+                  <span class="text-weight-bold ${connectionTextColor}">${params.value[2]}</span>
+                </div>
+                <div>
+                  <div style="line-height: 100%; border-left: 3px solid Tomato " class="q-pl-xs">${noConnectionReason}</div>
+                </div>
+                <hr size="1" color="lightgrey" noshade>
+                <div class="flex justify-between">
+                  <span>Начало периода: </span>
+                  <span>${startDate}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Конец периода: </span>
+                  <span>${endDate}</span>
+                </div>
+                <div>
+                  <span>Продолжительность: </span>
+                  <span>${formattedDuration}</span>
+                </div>
+              </div>
+              `
+            },
+            textStyle: {
+              fontFamily: 'sans-serif'
+            }
           }
         })
-
-        // lineData.value.push([
-        //   [arr[i].date_of_change, conStart],
-        //   [arr[i + 1].date_of_change, conEnd]
-        // ])
-        rangeBarData.value.push([
-          arr[i].date_of_change,
-          arr[i + 1].date_of_change,
-          barColor,
-          barPattern,
-          legendName
-        ])
-
+        //
         newLegend.push({
           name: legendName,
           itemStyle: {
-            opacity: 0
+            decal: {
+              symbol: barPattern,
+              color: '#797979',
+              dashArrayX: barPatternDashX,
+              dashArrayY: barPatternDashY
+            }
           },
-          lineStyle: {
-            // color: lineColor
+          textStyle: {
+            backgroundColor: 'blue'
           }
         })
       }
 
-      // lineData.value = rangeBarData.value.map(function (item, index) {
-      //   return {
-      //     value: item
-      //   }
-      // })
-      rangeBarData.value = rangeBarData.value.map(function (item, index) {
-        return {
-          value: item,
-          itemStyle: {
-            color: item[2],
-            decal: {
-              symbol: item[3]
-            }
-          }
-        }
-      })
-
-      newSeries.push({
-        name: legendName,
-        type: 'custom',
-        data: rangeBarData.value,
-        clip: false,
-        renderItem: function (params, api) {
-          const start = api.coord([api.value(0), 1])
-          const size = api.size([api.value(1) - api.value(0), 1])
-          return {
-            type: 'rect',
-            transition: ['shape'],
-            shape: {
-              x: start[0],
-              y: start[1],
-              width: size[0],
-              height: size[1]
-            },
-            style: {
-              fill: api.visual('color'),
-              decal: api.visual('decal')
-            }
-          }
-        },
-        dimensions: ['с', 'по', 'связь'],
-        encode: {
-          x: [0, 1],
-          // y: 2,
-          tooltip: [0, 1, 2, 3, 4],
-          itemName: 4
-        },
-        xAxisIndex: 1,
-        yAxisIndex: 1
-      })
-
       postChart.value.setOption(
         {
-          // legend: {
-          //   data: newLegend
-          // },
+          title: { text: 'Состояние связи с РТП' },
+          legend: {
+            data: newLegend,
+            top: 30,
+            left: 0
+          },
           series: newSeries
         },
         {
@@ -468,6 +506,6 @@ onBeforeRouteLeave((to, from) => {
 
 <style scoped>
 .chart {
-  height: 400px;
+  height: 200px;
 }
 </style>
