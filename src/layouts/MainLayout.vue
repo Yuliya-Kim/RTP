@@ -7,7 +7,8 @@
       class="bg-grey-10"
     >
       <q-toolbar class="bg-blue-grey-9">
-        <q-toolbar-title class="text-h5">Состояние постов РТМ</q-toolbar-title>
+        <q-toolbar-title class="text-h5">{{route.meta.pageTitle || 'РТП в городе ' + route.params.location + 'е'}}</q-toolbar-title>
+        <!-- <q-toolbar-title class="text-h5">Состояние постов РТМ</q-toolbar-title> -->
         <q-btn flat icon="mdi-account-multiple" to="/users" />
         <q-separator inset vertical spaced color="white" />
         <q-toggle
@@ -67,12 +68,24 @@
 
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 // import { useAuthStore } from '../stores/auth'
 import { usePostsStore } from '../stores/posts'
 import PostsMenu from 'components/PostsMenu.vue'
 import PageFooter from 'components/PageFooter.vue'
 import AccountDropdown from 'components/AccountDropdown.vue'
-import { useQuasar } from 'quasar'
+import { useQuasar, useMeta } from 'quasar'
+
+const route = useRoute()
+// const route = useRoute()
+// const location = route.params.location
+const pageTitle = ref('Состояние постов РТМ')
+useMeta(() => {
+  return {
+    title: pageTitle.value,
+    titleTemplate: title => `${pageTitle.value} — Система мониторинга РТП`
+  }
+})
 
 // const authStore = useAuthStore()
 

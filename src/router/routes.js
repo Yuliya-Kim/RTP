@@ -15,7 +15,8 @@ const routes = [
       }
     ],
     meta: {
-      requiresAuth: true
+      requiresAuth: true,
+      pageTitle: 'Таблица'
     }
   },
   {
@@ -29,6 +30,7 @@ const routes = [
     ],
     meta: {
       requiresAuth: true
+      // pageTitle: 'location'
     },
     beforeEnter: (to, from, next) => {
       const store = usePostsStore()
@@ -45,13 +47,18 @@ const routes = [
     path: '/login',
     component: () => import('layouts/LoginLayout.vue'),
     meta: {
-      title: 'Вход',
-      requiresAuth: false
+      requiresAuth: false,
+      pageTitle: 'Вход'
     }
   },
   {
     path: '/:catchAll(.*)*',
-    component: () => import('pages/ErrorNotFound.vue')
+    component: () => import('pages/ErrorNotFound.vue'),
+    meta: {
+      title: 'Вход',
+      requiresAuth: false,
+      pageTitle: 'Вход'
+    }
   }
 ]
 
