@@ -10,64 +10,27 @@
           </q-card-section>
 
           <q-card-section>
+
             <div class="row items-center q-gutter-xs">
-              <div>Данные за</div>
-              <q-select
-                v-model="dateSelected"
-                :options="dateOptions"
+              <div class="text-bold">Данные за {{dateSelected.label}}:</div>
+              <q-btn-dropdown
+                :label="dateSelectTextFrom + ' — ' + dateSelectTextTo"
+                :ripple="false"
+                class="dateDropdown text-lowercase text-weight-regular"
                 dense
+                flat
               >
-                <template v-slot:option="scope">
-                  <div v-bind="scope.itemProps" class="q-pa-sm">
-                    <!-- <q-item-section> -->
-                      <q-radio
-                        v-model="dateSelected"
-                        :val="scope.opt"
-                        :label="scope.opt.label"
-                        dense
-                      />
-                      <!-- {{scope.opt.value}} -->
-                    <!-- </q-item-section> -->
-                  </div>
-                </template>
-                <template v-slot:after-options>
-                  <div class="q-pa-sm q-pl-lg">
-                    <div class="flex q-gutter-sm">
-                      <q-input
-                        v-model="dateSelected.value.from"
-                        label="ОТ"
-                        outlined
-                        dense
-                        readonly
-                      />
-                      <q-input
-                        v-model="dateSelected.value.to"
-                        label="ДО"
-                        outlined
-                        dense
-                        readonly
-                      />
+                <q-card>
+                  <q-card-section>
+                    <div class="row q-gutter-sm">
+                      <q-input v-model="dateSelected.value.from" label="С" dense></q-input>
+                      <q-input label="По" dense></q-input>
                     </div>
-                  </div>
-                </template>
-              </q-select>
+                  </q-card-section>
+                </q-card>
+              </q-btn-dropdown>
             </div>
-            <!-- <div class="row items-center q-gutter-xs">
-              <span>Период с</span>
-              <q-select
-                v-model="dateSelected.value.from"
-                :readonly="dateSelected !== dateOptions[2]"
-                dense
-              />
-              <span>по</span>
-              <q-select
-                v-model="dateSelected.value.to"
-                :readonly="dateSelected !== dateOptions[2]"
-                dense
-              />
-            </div> -->
-            <br>
-            <div class="text-caption">C {{dateSelected.value.from}} по {{dateSelected.value.to}}</div>
+
             <VChart
               ref="rangeChart"
               :init-options="initOptions"
@@ -144,7 +107,7 @@ const dateOptions = ref([
   },
   {
     id: 2,
-    label: 'другой период',
+    label: 'период',
     value: {
       from: date.formatDate(date.subtractFromDate(new Date(), { days: 33 }), 'YYYY-MM-DD HH:mm:ss'),
       to: date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss')
@@ -152,6 +115,10 @@ const dateOptions = ref([
   }
 ])
 const dateSelected = ref(dateOptions.value[0])
+
+const allMonths = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
+const dateSelectTextFrom = ref(date.formatDate(dateSelected.value.value.from, "DD MMMM 'YY", { months: allMonths }))
+const dateSelectTextTo = ref(date.formatDate(dateSelected.value.value.to, "DD MMMM 'YY", { months: allMonths }))
 
 use([
   CanvasRenderer,
@@ -542,5 +509,8 @@ onBeforeRouteLeave((to, from) => {
 }
 .table-card > div {
   width: 100% !important;
+}
+.dateDropdown .q-btn__content {
+  border-bottom: 1px white dashed;
 }
 </style>
