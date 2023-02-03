@@ -1,5 +1,6 @@
 <template>
   <q-page padding>
+    {{dateSelected.value}}
     <div class="column q-gutter-y-md">
       <!-- ГРАФИК -->
       <div class="row">
@@ -12,24 +13,82 @@
           <q-card-section>
 
             <div class="row items-center q-gutter-xs">
-              <div class="text-bold">Данные за {{dateSelected.label}}:</div>
+              <div class="text-bold">Данные за {{dateSelected.descLabel}}:</div>
               <q-btn-dropdown
-                :label="dateSelectTextFrom + ' — ' + dateSelectTextTo"
                 :ripple="false"
                 class="dateDropdown text-lowercase text-weight-regular"
                 dense
                 flat
               >
-                <q-card>
-                  <q-card-section>
-                    <div class="row q-gutter-sm">
-                      <q-input v-model="dateSelected.value.from" label="С" dense></q-input>
-                      <q-input label="По" dense></q-input>
-                    </div>
-                  </q-card-section>
-                </q-card>
+                <template v-slot:label>
+                  {{ dateSelectTextFrom.value }} — {{ dateSelectTextTo.value }}
+                </template>
+                <q-list>
+                  <q-item
+                    v-for="option in dateOptions"
+                    :key="option.id"
+                    :active="option === dateSelected"
+                  >
+                    <q-item-section side>
+                      <q-radio
+                        v-model="dateSelected"
+                        :val="option"
+                        dense
+                      />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>{{option.label}}</q-item-label>
+                      <q-item-label caption>
+                        {{ date.formatDate(option.value.from, "DD MMMM 'YY", { months: allMonths }) }}
+                        —
+                        {{ date.formatDate(option.value.to, "DD MMMM 'YY", { months: allMonths }) }}
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                </q-list>
+
               </q-btn-dropdown>
             </div>
+
+            <!-- <div class="row items-center q-gutter-sm">
+              <div class="text-bold">Данные за {{dateSelected.descLabel}}:</div>
+              <q-select
+                v-model="dateSelected"
+                :options="dateOptions"
+                dense
+                borderless
+                class="dateDropdown"
+              >
+                <template v-slot:selected-item>
+                  <span>{{dateSelectTextFrom}} — {{dateSelectTextTo}}</span>
+                </template>
+                <template v-slot:option="scope">
+                  <q-item v-bind="scope.itemProps" @@click.capture="biba()">
+                    <q-item-section side>
+                      <q-radio
+                        v-model="dateSelected"
+                        :val="scope.opt"
+                        dense
+                      />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>{{ scope.opt.label }}</q-item-label>
+                      <q-item-label caption>
+                        {{ date.formatDate(scope.opt.value.from, "DD MMMM 'YY", { months: allMonths }) }}
+                        —
+                        {{ date.formatDate(scope.opt.value.to, "DD MMMM 'YY", { months: allMonths }) }}
+                      </q-item-label>
+                      <div v-if="scope.opt.id === 2">
+                        <div class="row q-gutter-sm">
+                          <q-input v-model="scope.opt.value.from" />
+                          <q-input v-model="scope.opt.value.to" />
+                        </div>
+                      </div>
+                    </q-item-section>
+                  </q-item>
+                </template>
+              </q-select>
+            </div> -->
 
             <VChart
               ref="rangeChart"
@@ -91,7 +150,8 @@ const post = computed(() => postsStore.currentPost)
 const dateOptions = ref([
   {
     id: 0,
-    label: 'последнюю неделю',
+    label: 'последняя неделя',
+    descLabel: 'последнюю неделю',
     value: {
       from: date.formatDate(date.subtractFromDate(new Date(), { days: 7 }), 'YYYY-MM-DD HH:mm:ss'),
       to: date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss')
@@ -100,6 +160,7 @@ const dateOptions = ref([
   {
     id: 1,
     label: 'последний месяц',
+    descLabel: 'последний месяц',
     value: {
       from: date.formatDate(date.subtractFromDate(new Date(), { days: 31 }), 'YYYY-MM-DD HH:mm:ss'),
       to: date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss')
@@ -107,7 +168,8 @@ const dateOptions = ref([
   },
   {
     id: 2,
-    label: 'период',
+    label: 'другой период',
+    descLabel: 'период',
     value: {
       from: date.formatDate(date.subtractFromDate(new Date(), { days: 33 }), 'YYYY-MM-DD HH:mm:ss'),
       to: date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss')
@@ -117,8 +179,8 @@ const dateOptions = ref([
 const dateSelected = ref(dateOptions.value[0])
 
 const allMonths = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
-const dateSelectTextFrom = ref(date.formatDate(dateSelected.value.value.from, "DD MMMM 'YY", { months: allMonths }))
-const dateSelectTextTo = ref(date.formatDate(dateSelected.value.value.to, "DD MMMM 'YY", { months: allMonths }))
+const dateSelectTextFrom = computed(() => ref(date.formatDate(dateSelected.value.value.from, "DD MMMM 'YY", { months: allMonths })))
+const dateSelectTextTo = computed(() => ref(date.formatDate(dateSelected.value.value.to, "DD MMMM 'YY", { months: allMonths })))
 
 use([
   CanvasRenderer,
@@ -510,7 +572,8 @@ onBeforeRouteLeave((to, from) => {
 .table-card > div {
   width: 100% !important;
 }
-.dateDropdown .q-btn__content {
+.dateDropdown .q-btn__content,
+.dateDropdown .q-field__inner {
   border-bottom: 1px white dashed;
 }
 </style>
