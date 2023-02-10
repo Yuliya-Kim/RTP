@@ -16,7 +16,7 @@ const routes = [
     ],
     meta: {
       requiresAuth: true,
-      pageTitle: 'Таблица'
+      pageTitle: 'Состояние РТП'
     }
   },
   {

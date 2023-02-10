@@ -15,6 +15,16 @@
       </q-btn>
     </transition>
     <editor-content :editor="editor" />
+    <q-chip
+      v-show="charLimit !== 0"
+      class="q-pa-none absolute-top-right"
+      size="sm"
+      color="transparent"
+      text-color="grey-8"
+      dense
+    >
+      {{ editor.storage.characterCount.characters() }}/{{ charLimit }} символов
+    </q-chip>
   </div>
 </template>
 
@@ -30,6 +40,7 @@ import { Color } from '@tiptap/extension-color'
 import Highlight from '@tiptap/extension-highlight'
 import TaskItem from '@tiptap/extension-task-item'
 import TaskList from '@tiptap/extension-task-list'
+import CharacterCount from '@tiptap/extension-character-count'
 // import ListItem from '@tiptap/extension-list-item'
 // import BulletList from '@tiptap/extension-bullet-list'
 
@@ -41,6 +52,10 @@ const props = defineProps({
   selectedCell1: {
     type: Object,
     default: null
+  },
+  charLimit: {
+    type: Number,
+    default: 0
   }
 })
 
@@ -60,7 +75,10 @@ const editor = useEditor({
     Color,
     Highlight.configure({ multicolor: true }),
     TaskList,
-    TaskItem.configure({ nested: true })
+    TaskItem.configure({ nested: true }),
+    CharacterCount.configure({
+      limit: props.charLimit
+    })
     // BulletList
     // ListItem
   ],

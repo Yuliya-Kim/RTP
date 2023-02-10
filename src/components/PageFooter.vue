@@ -3,7 +3,7 @@
     <div>
       <q-icon
         :name="postsStore.posts.conn_to_dneprdata ? 'mdi-database' : 'mdi-database-off'"
-        :color="postsStore.posts.conn_to_dneprdata ? 'green' : 'red'"
+        :color="postsStore.posts.conn_to_dneprdata ? 'green-13' : 'red-13'"
         class="q-mr-xs"
       />
       <span>dneprdata</span>
@@ -12,7 +12,7 @@
     <div>
       <q-icon
         :name="postsStore.posts.conn_to_rtplocal ? 'mdi-database' : 'mdi-database-off'"
-        :color="postsStore.posts.conn_to_rtplocal ? 'green' : 'red'"
+        :color="postsStore.posts.conn_to_rtplocal ? 'green-13' : 'red-13'"
         class="q-mr-xs"
       />
       <span>rtplocal</span>
@@ -21,7 +21,7 @@
     <div>
       <q-icon
         :name="postsStore.posts.conn_to_rtpnast ? 'mdi-database' : 'mdi-database-off'"
-        :color="postsStore.posts.conn_to_rtpnast ? 'green' : 'red'"
+        :color="postsStore.posts.conn_to_rtpnast ? 'green-13' : 'red-13'"
         class="q-mr-xs"
       />
       <span>rtpnast</span>

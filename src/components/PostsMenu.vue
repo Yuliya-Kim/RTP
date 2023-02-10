@@ -19,12 +19,17 @@
           {{ post.ip || 'IP не указан' }}
         </q-item-label>
         <q-item-label>
-          <q-badge
+          <!-- <q-badge
             :color="post.apk_info.info_status ? 'green' : 'transparent'"
             text-color=""
           >
           {{post.apk_info.info_status}}
-          </q-badge>
+          </q-badge> -->
+          <br>
+          <div class="row q-gutter-sm">
+            <span>Состояние:</span>
+            <div v-html="post.apk_info.info_status"></div>
+          </div>
         </q-item-label>
       </q-item-section>
       <q-item-section side top>

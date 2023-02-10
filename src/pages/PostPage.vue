@@ -1,6 +1,6 @@
 <template>
   <q-page padding>
-    {{dateSelected.value}}
+    <br>
     <div class="column q-gutter-y-md">
       <!-- ГРАФИК -->
       <div class="row">
@@ -9,86 +9,93 @@
           <q-card-section>
             <div class="text-h6 heading-bullet">Состояние связи {{post.name}}</div>
           </q-card-section>
-
+          <!-- <q-radio
+            v-for="option in options"
+            :key="option.value"
+            v-model="selectedOption"
+            :val="option.value"
+            :label="option.label"
+            checked-icon="check_circle"
+            color="cyan"
+          /> -->
           <q-card-section>
-
             <div class="row items-center q-gutter-xs">
-              <div class="text-bold">Данные за {{dateSelected.descLabel}}:</div>
+              <div class="text-bold">Данные за {{selectedOptionLabel}}:</div>
               <q-btn-dropdown
-                :ripple="false"
                 class="dateDropdown text-lowercase text-weight-regular"
+                :ripple="false"
                 dense
                 flat
               >
                 <template v-slot:label>
-                  {{ dateSelectTextFrom.value }} — {{ dateSelectTextTo.value }}
+                  <!-- {{ dateSelectTextFrom.value }} — {{ dateSelectTextTo.value }} -->
+                  {{ date.formatDate(selectedDate.from, 'DD MMM \'YY') }}
+                  —
+                  {{ date.formatDate(selectedDate.to, 'DD MMM \'YY') }}
                 </template>
-                <q-list>
-                  <q-item
-                    v-for="option in dateOptions"
-                    :key="option.id"
-                    :active="option === dateSelected"
-                  >
-                    <q-item-section side>
+                <q-card>
+                  <q-card-section>
+                    <div
+                      v-for="option in options"
+                      :key="option.value"
+                      class="column"
+                    >
                       <q-radio
-                        v-model="dateSelected"
-                        :val="option"
-                        dense
+                        v-model="selectedOption"
+                        :val="option.value"
+                        :label="option.label"
+                        checked-icon="check_circle"
+                        color="cyan"
                       />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>{{option.label}}</q-item-label>
-                      <q-item-label caption>
-                        {{ date.formatDate(option.value.from, "DD MMMM 'YY", { months: allMonths }) }}
-                        —
-                        {{ date.formatDate(option.value.to, "DD MMMM 'YY", { months: allMonths }) }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-
-              </q-btn-dropdown>
-            </div>
-
-            <!-- <div class="row items-center q-gutter-sm">
-              <div class="text-bold">Данные за {{dateSelected.descLabel}}:</div>
-              <q-select
-                v-model="dateSelected"
-                :options="dateOptions"
-                dense
-                borderless
-                class="dateDropdown"
-              >
-                <template v-slot:selected-item>
-                  <span>{{dateSelectTextFrom}} — {{dateSelectTextTo}}</span>
-                </template>
-                <template v-slot:option="scope">
-                  <q-item v-bind="scope.itemProps" @@click.capture="biba()">
-                    <q-item-section side>
-                      <q-radio
-                        v-model="dateSelected"
-                        :val="scope.opt"
-                        dense
-                      />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>{{ scope.opt.label }}</q-item-label>
-                      <q-item-label caption>
-                        {{ date.formatDate(scope.opt.value.from, "DD MMMM 'YY", { months: allMonths }) }}
-                        —
-                        {{ date.formatDate(scope.opt.value.to, "DD MMMM 'YY", { months: allMonths }) }}
-                      </q-item-label>
-                      <div v-if="scope.opt.id === 2">
-                        <div class="row q-gutter-sm">
-                          <q-input v-model="scope.opt.value.from" />
-                          <q-input v-model="scope.opt.value.to" />
+                      <div v-if="option.value === 'specific'">
+                        <div class="row q-gutter-md">
+                          <div>
+                            <q-input
+                              v-model="selectedDate.from"
+                              :disable="selectedOption !== 'specific'"
+                              dense
+                              filled
+                              color="cyan"
+                            >
+                              <template v-slot:prepend>
+                                <q-icon name="event" />
+                              </template>
+                            </q-input>
+                            <q-date
+                              v-model="selectedDate.from"
+                              :disable="selectedOption !== 'specific'"
+                              mask="YYYY-MM-DD HH:mm:ss"
+                              minimal
+                              flat
+                            />
+                          </div>
+                          <div>
+                            <q-input
+                              v-model="selectedDate.to"
+                              :disable="selectedOption !== 'specific'"
+                              dense
+                              filled
+                              color="cyan"
+                            >
+                              <template v-slot:prepend>
+                                <q-icon name="event" />
+                              </template>
+                            </q-input>
+                            <q-date
+                              v-model="selectedDate.to"
+                              :disable="selectedOption !== 'specific'"
+                              mask="YYYY-MM-DD HH:mm:ss"
+                              minimal
+                              flat
+                            />
+                          </div>
                         </div>
                       </div>
-                    </q-item-section>
-                  </q-item>
-                </template>
-              </q-select>
-            </div> -->
+                    </div>
+                  </q-card-section>
+                </q-card>
+              </q-btn-dropdown>
+            </div>
 
             <VChart
               ref="rangeChart"
@@ -99,6 +106,8 @@
               autoresize
               class="chart"
             />
+            <br>
+            <div>{{selectedDate}}</div>
           </q-card-section>
         </q-card>
       </div>
@@ -107,7 +116,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, provide } from 'vue'
+import { ref, reactive, computed, watch, onMounted, provide } from 'vue'
 import { useRoute, onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router'
 
 import { axios } from 'boot/axios'
@@ -145,42 +154,40 @@ useMeta(() => {
 const authStore = useAuthStore()
 const postsStore = usePostsStore()
 
-const post = computed(() => postsStore.currentPost)
+const selectedOption = ref('week')
+const options = [
+  { label: 'Последняя неделя', descLabel: 'последнюю неделю', value: 'week' },
+  { label: 'Последний месяц', descLabel: 'последний месяц', value: 'month' },
+  { label: 'Другой период', descLabel: 'период', value: 'specific' }
+]
+// const currentDate = computed(() => date.formatDate(new Date(), 'DD MMM \'YY'))
+// const currentDateWeek = computed(() => date.formatDate(date.subtractFromDate(currentDate, { days: 7 }), 'DD MMM \'YY'))
 
-const dateOptions = ref([
-  {
-    id: 0,
-    label: 'последняя неделя',
-    descLabel: 'последнюю неделю',
-    value: {
-      from: date.formatDate(date.subtractFromDate(new Date(), { days: 7 }), 'YYYY-MM-DD HH:mm:ss'),
-      to: date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss')
-    }
-  },
-  {
-    id: 1,
-    label: 'последний месяц',
-    descLabel: 'последний месяц',
-    value: {
-      from: date.formatDate(date.subtractFromDate(new Date(), { days: 31 }), 'YYYY-MM-DD HH:mm:ss'),
-      to: date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss')
-    }
-  },
-  {
-    id: 2,
-    label: 'другой период',
-    descLabel: 'период',
-    value: {
-      from: date.formatDate(date.subtractFromDate(new Date(), { days: 33 }), 'YYYY-MM-DD HH:mm:ss'),
-      to: date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss')
-    }
+const selectedDate = reactive({
+  from: '',
+  to: ''
+})
+
+function getDateRange (optionType) {
+  console.log(optionType)
+  if (optionType === 'week') {
+    selectedDate.to = date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss')
+    selectedDate.from = date.formatDate(date.subtractFromDate(selectedDate.to, { days: 7 }), 'YYYY-MM-DD HH:mm:ss')
+  } else if (optionType === 'month') {
+    selectedDate.to = date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss')
+    selectedDate.from = date.formatDate(date.subtractFromDate(selectedDate.to, { days: 30 }), 'YYYY-MM-DD HH:mm:ss')
+  } else if (optionType === 'specific') {
+    selectedDate.to = date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss')
+    selectedDate.from = date.formatDate(date.subtractFromDate(selectedDate.to, { days: 14 }), 'YYYY-MM-DD HH:mm:ss')
   }
-])
-const dateSelected = ref(dateOptions.value[0])
+}
 
-const allMonths = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
-const dateSelectTextFrom = computed(() => ref(date.formatDate(dateSelected.value.value.from, "DD MMMM 'YY", { months: allMonths })))
-const dateSelectTextTo = computed(() => ref(date.formatDate(dateSelected.value.value.to, "DD MMMM 'YY", { months: allMonths })))
+watch(selectedOption, async (newOption, oldOption) => {
+  getDateRange(newOption)
+})
+const selectedOptionLabel = computed(() => options[options.map(e => e.value).indexOf(selectedOption.value)].descLabel)
+
+const post = computed(() => postsStore.currentPost)
 
 use([
   CanvasRenderer,
@@ -267,11 +274,6 @@ const rangeOption = ref({
   }
 })
 
-// const rangeBarData = ref([])
-// const datedate = ref({
-//   from: date.formatDate(date.subtractFromDate(new Date(), { days: 7 }), 'YYYY-MM-DD HH:mm:ss'),
-//   to: date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss')
-// })
 const chartDate = ref([
   date.formatDate(date.subtractFromDate(new Date(), { days: 7 }), 'YYYY-MM-DD HH:mm:ss'),
   date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss')
@@ -550,7 +552,11 @@ async function getChartData () {
 }
 
 //
+// onBeforeMount(() => {
+//   getDateRange(selectedOption.value)
+// })
 onMounted(() => {
+  getDateRange(selectedOption.value)
   getChartData()
 })
 

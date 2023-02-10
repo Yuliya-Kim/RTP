@@ -2,22 +2,29 @@
   <q-layout view="lHr lpR lFf">
 
     <q-header
-      bordered
       style="border-color: rgba(255, 255, 255, 0.28);"
       class="bg-grey-10"
+      bordered
     >
       <q-toolbar class="bg-blue-grey-9">
+
+        <q-btn v-if="route.meta.pageTitle !== 'Состояние РТП'" to="/posts" flat>
+          <q-icon name="arrow_back" />
+        </q-btn>
+        <q-separator v-if="route.meta.pageTitle !== 'Состояние РТП'" vertical inset spaced color="white"/>
+
         <q-toolbar-title class="text-h5">{{route.meta.pageTitle || 'РТП в городе ' + route.params.location + 'е'}}</q-toolbar-title>
-        <!-- <q-toolbar-title class="text-h5">Состояние постов РТМ</q-toolbar-title> -->
+
         <q-btn flat icon="mdi-account-multiple" to="/users" />
         <q-separator inset vertical spaced color="white" />
         <q-toggle
           v-model="darkThemeIsActive"
+          @click="changeTheme(darkThemeIsActive)"
           checked-icon="dark_mode"
           unchecked-icon="light_mode"
           color="grey-8"
           icon-color="yellow"
-          @click="changeTheme(darkThemeIsActive)"
+          disable
         />
         <AccountDropdown />
       </q-toolbar>
@@ -33,10 +40,10 @@
       <q-list>
         <q-item
           clickable
-          dark
-          style="height: 50px; border-right: 1px grey solid"
-          class="bg-blue-grey-9 text-white"
           to="/posts"
+          style="height: 50px;"
+          class="bg-blue-grey-9 text-white"
+          dark
         >
           <q-item-section side>
             <q-img src="../assets/logo_white.svg" width="22px" />
@@ -55,7 +62,7 @@
       </q-scroll-area>
     </q-drawer>
 
-    <q-page-container>
+    <q-page-container class="window-height">
       <router-view />
     </q-page-container>
 
