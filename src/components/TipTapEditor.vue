@@ -23,7 +23,7 @@
       text-color="grey-8"
       dense
     >
-      {{ editor.storage.characterCount.characters() }}/{{ charLimit }} символов
+      {{ editor.storage.characterCount.characters() }}/{{ charLimit }}
     </q-chip>
   </div>
 </template>
@@ -75,7 +75,12 @@ const editor = useEditor({
     Color,
     Highlight.configure({ multicolor: true }),
     TaskList,
-    TaskItem.configure({ nested: true }),
+    TaskItem.configure({
+      nested: true,
+      HTMLAttributes: {
+        class: 'myCheckbox'
+      }
+    }),
     CharacterCount.configure({
       limit: props.charLimit
     })
@@ -147,7 +152,7 @@ function setFontColor (color) {
   editor.value.chain().focus().setColor(color).run()
 }
 function setBgColor (color) {
-  editor.value.chain().focus().toggleHighlight({ color: color || '#ffff00' }).run()
+  editor.value.chain().focus().toggleHighlight({ color: color }).run()
 }
 
 function toggleTask () {
@@ -176,34 +181,80 @@ defineExpose({
 //   color: #fff;
 // }
 .ProseMirror {
-  padding: 7px 16px;
-}
-mark {
-  padding: 0.125em 0;
-  border-radius: 0.25em;
-  box-decoration-break: clone;
-}
+  padding: 10px;
 
-ul[data-type="taskList"] {
-  list-style: none;
-  padding: 0;
+  ul, ol { padding: 0 1rem; }
 
-  p {
-    margin: 0;
-  }
+  ul[data-type="taskList"] {
+    list-style: none;
+    padding: 0;
 
-  li {
-    display: flex;
-
-    > label {
-      flex: 0 0 auto;
-      margin-right: 0.5rem;
-      user-select: none;
-      display: flex;
+    p {
+      margin: 0;
     }
 
-    > div {
-      flex: 1 1 auto;
+    li {
+      display: flex;
+
+      // &.myCheckbox {
+      //   label {
+      //     position: relative;
+      //     padding-left: 30px;
+      //     font-size: 22px;
+
+      //     input {
+      //       position: absolute;
+      //       opacity: 0;
+      //       height: 0;
+      //       width: 0;
+      //       &:checked ~ span {
+      //         background-color: #2196F3;
+      //         &:after {
+      //           display: block;
+      //         }
+      //       }
+      //     }
+
+      //     span {
+      //       position: absolute;
+      //       top: 0;
+      //       left: 0;
+      //       height: 16px;
+      //       width: 16px;
+      //       background-color: #eee;
+
+      //       &:after {
+      //         content: "";
+      //         position: absolute;
+      //         display: none;
+      //         left: 4px;
+      //         top: 0px;
+      //         width: 7px;
+      //         height: 12px;
+      //         border: solid white;
+      //         border-width: 0 3px 3px 0;
+      //         border-radius: 8px;
+      //         -webkit-transform: rotate(45deg);
+      //         -ms-transform: rotate(45deg);
+      //         transform: rotate(45deg);
+      //       }
+      //     }
+      //   }
+      // }
+
+      label:hover input ~ span {
+        background-color: #ccc;
+      }
+
+      > label {
+        flex: 0 0 auto;
+        margin-right: 0.5rem;
+        user-select: none;
+      }
+
+      > div {
+        flex: 1 1 auto;
+      }
     }
   }
 }

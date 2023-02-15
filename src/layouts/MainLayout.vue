@@ -24,7 +24,6 @@
           unchecked-icon="light_mode"
           color="grey-8"
           icon-color="yellow"
-          disable
         />
         <AccountDropdown />
       </q-toolbar>

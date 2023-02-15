@@ -53,19 +53,29 @@
         dense
         flat
       >
-        <q-list>
-          <q-item>
-            <q-item-section>
-              <q-color
-                v-model="fontColor"
-                @change="setFontColor(fontColor)"
-                default-view="palette"
-                no-header-tabs
-                no-footer
-              />
-            </q-item-section>
-          </q-item>
-        </q-list>
+        <q-card class="bg-grey-9">
+          <q-card-section class="q-pa-sm">
+            <div class="column q-gutter-xs">
+              <q-btn align="left" icon="o_format_color_reset" dense flat>Нет цвета!!!1</q-btn>
+            </div>
+            <div v-for="colorArr in colorsPallete" :key="colorArr" class="column q-gutter-xs colorRow">
+              <div class="row q-gutter-xs ">
+                <div
+                  v-for="color in colorArr" :key="color"
+                  :style="`background-color: ${color}`"
+                  class="colorBall"
+                />
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+        <!-- <q-color
+          v-model="fontColor"
+          @change="setFontColor(fontColor)"
+          default-view="palette"
+          no-header-tabs
+          no-footer
+        /> -->
       </q-btn-dropdown>
       <q-tooltip transition-show="scale" transition-hide="scale">
         Цвет текста
@@ -85,11 +95,13 @@
         dense
         flat
       >
-        <q-list>
-          <q-item-section>
-            <q-color v-model="bgColor" default-view="spectrum" no-header-tabs no-footer></q-color>
-          </q-item-section>
-        </q-list>
+        <q-color
+          v-model="bgColor"
+          @change="setBgColor(bgColor)"
+          default-view="palette"
+          no-header-tabs
+          no-footer
+        />
       </q-btn-dropdown>
       <q-tooltip transition-show="scale" transition-hide="scale">
         Цвет фона текста
@@ -121,12 +133,12 @@
 import { ref, computed } from 'vue'
 import { useQuasar } from 'quasar'
 
-const $q = useQuasar()
-
 const props = defineProps({
   selectedCell: Object,
   itemRefs: Object
 })
+
+const $q = useQuasar()
 
 const editorBtns = {
   fontStyle: [
@@ -148,6 +160,16 @@ const editorBtns = {
   ]
 }
 
+const colorsPallete = {
+  colors: ['#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#4a86e8', '#0000ff', '#9900ff', '#ff00ff'],
+  light3: ['#e6b8af', '#f4cccc', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#c9daf8', '#cfe2f3', '#d9d2e9', '#ead1dc'],
+  light2: ['#dd7e6b', '#ea9999', '#f9cb9c', '#ffe599', '#b6d7a8', '#a2c4c9', '#a4c2f4', '#9fc5e8', '#b4a7d6', '#d5a6bd'],
+  light1: ['#cc4125', '#e06666', '#f6b26b', '#ffd966', '#93c47d', '#76a5af', '#6d9eeb', '#6fa8dc', '#8e7cc3', '#c27ba0'],
+  dark1: ['#a61c00', '#cc0000', '#e69138', '#f1c232', '#6aa84f', '#45818e', '#3c78d8', '#3d85c6', '#674ea7', '#a64d79'],
+  dark2: ['#85200c', '#990000', '#b45f06', '#bf9000', '#38761d', '#134f5c', '#1155cc', '#0b5394', '#351c75', '#741b47'],
+  dark3: ['#5b0f00', '#660000', '#783f04', '#7f6000', '#274e13', '#0c343d', '#1c4587', '#073763', '#20124d', '#4c1130']
+}
+
 function doEdditorAction (action) {
   props.itemRefs[props.selectedCell.colName][props.selectedCell.rowId].editorAction(action)
 }
@@ -155,11 +177,11 @@ function doEdditorAction (action) {
 function checkActiveClass (group, btn) {
   let activeClass = ''
   if (group === 'fontStyle' || group === 'lists') {
-    activeClass = props.selectedCell.colName !== '' && props.itemRefs[props.selectedCell.colName][props.selectedCell.rowId].editor.isActive(btn) ? 'bg-grey-8 text-blue-6' : ''
+    activeClass = props.selectedCell.colName !== '' && props.itemRefs[props.selectedCell.colName][props.selectedCell.rowId].editor.isActive(btn) ? 'bg-grey-8 text-cyan-13' : ''
   } else if (group === 'alignText') {
-    activeClass = props.selectedCell.colName !== '' && props.itemRefs[props.selectedCell.colName][props.selectedCell.rowId].editor.isActive({ textAlign: btn }) ? 'bg-grey-8 text-blue-6' : ''
+    activeClass = props.selectedCell.colName !== '' && props.itemRefs[props.selectedCell.colName][props.selectedCell.rowId].editor.isActive({ textAlign: btn }) ? 'bg-grey-8 text-cyan-13' : ''
   } else if (group === 'fontColor') {
-    activeClass = props.selectedCell.colName !== '' && props.itemRefs[props.selectedCell.colName][props.selectedCell.rowId].editor.isActive('textStyle', { color: '#958DF1' }) ? 'bg-grey-8 text-blue-6' : ''
+    activeClass = props.selectedCell.colName !== '' && props.itemRefs[props.selectedCell.colName][props.selectedCell.rowId].editor.isActive('textStyle', { color: '#958DF1' }) ? 'bg-grey-8 text-cyan-13' : ''
   }
   return activeClass
 }
@@ -169,21 +191,21 @@ const letterColor = computed(() => {
   return defaultLetterColor
 })
 
-const fontColor = ref('')
-const fontColorIcon = computed(() => {
-  const letter = letterColor.value.replace('#', '%23')
-  const selectedColor = fontColor.value.replace('#', '%23')
-  return `img:data:image/svg+xml;charset=utf8,
-  <svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'>
-    <path d='M 4.5 48 v -7 h 39 v 7 z ' fill='${selectedColor}'/>
-    <path d='M 11 34 L 22 6 h 4 l 11 28 h -3.75 l -2.85 -7.5 H 17.6 L 14.75 34 Z m 7.8 -10.7 h 10.4 L 24.1 9.75 h -0.2 Z' fill='${letter}'/>
-  </svg>`
-})
-function setFontColor (fontColor) {
-  props.itemRefs[props.selectedCell.colName][props.selectedCell.rowId].setFontColor(fontColor)
-}
+// const fontColor = ref('#ff33ff')
+// const fontColorIcon = computed(() => {
+//   const letter = letterColor.value.replace('#', '%23')
+//   const selectedColor = fontColor.value.replace('#', '%23')
+//   return `img:data:image/svg+xml;charset=utf8,
+//   <svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'>
+//     <path d='M 4.5 48 v -7 h 39 v 7 z ' fill='${selectedColor}'/>
+//     <path d='M 11 34 L 22 6 h 4 l 11 28 h -3.75 l -2.85 -7.5 H 17.6 L 14.75 34 Z m 7.8 -10.7 h 10.4 L 24.1 9.75 h -0.2 Z' fill='${letter}'/>
+//   </svg>`
+// })
+// function setFontColor (fontColor) {
+//   props.itemRefs[props.selectedCell.colName][props.selectedCell.rowId].setFontColor(fontColor)
+// }
 
-const bgColor = ref('')
+const bgColor = ref('#FFF176')
 const bgColorIcon = computed(() => {
   const letter = letterColor.value.replace('#', '%23')
   const selectedColor = bgColor.value.replace('#', '%23')
@@ -210,7 +232,7 @@ function setBgColor (bgColor) {
 
 </script>
 
-<style>
+<style lang="scss">
 .editorToolbar {
   z-index: 2;
   position: sticky;
@@ -222,4 +244,24 @@ function setBgColor (bgColor) {
 .dropdownBtn_no-split-border .q-btn-dropdown__arrow-container {
   border: none !important;
 }
+
+.colorRow:first-child {
+  padding-bottom: 5px;
+}
+
+.colorBall {
+  width: 20px;
+  height: 20px;
+  // border-radius: 50%;
+  cursor: pointer;
+
+  &:hover {
+    outline: 1px solid grey;
+  }
+
+  &.noColor {
+    outline: 1px solid white;
+  }
+}
+
 </style>
