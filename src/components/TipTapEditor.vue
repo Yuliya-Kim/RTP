@@ -1,6 +1,10 @@
 <template>
-  <div v-if="editor" style="height: 100%;">
-    <transition appear enter-active-class="animated fadeIn" leave-active-class="animated fadeOut">
+  <div v-if="editor" class="q-py-sm">
+    <transition
+      appear
+      enter-active-class="animated fadeIn"
+      leave-active-class="animated fadeOut"
+    >
       <q-btn
         v-show="newValue && newValue != initialValue"
         @click="emit('saveCell')"
@@ -16,7 +20,7 @@
     </transition>
     <editor-content :editor="editor" />
     <q-chip
-      v-show="charLimit !== 0"
+      v-show="activeCell && charLimit !== 0"
       class="q-pa-none absolute-top-right"
       size="sm"
       color="transparent"
@@ -30,9 +34,11 @@
 
 <script setup>
 
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
+import BulletList from '@tiptap/extension-bullet-list'
+import OrderedList from '@tiptap/extension-ordered-list'
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import TextStyle from '@tiptap/extension-text-style'
@@ -42,12 +48,15 @@ import TaskItem from '@tiptap/extension-task-item'
 import TaskList from '@tiptap/extension-task-list'
 import CharacterCount from '@tiptap/extension-character-count'
 // import ListItem from '@tiptap/extension-list-item'
-// import BulletList from '@tiptap/extension-bullet-list'
 
 const props = defineProps({
   modelValue: {
     type: String,
     default: ''
+  },
+  activeCell: {
+    type: Boolean,
+    default: false
   },
   selectedCell1: {
     type: Object,
@@ -59,46 +68,83 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'saveCell'])
+const CustomOrderedList = OrderedList.extend({
+  addKeyboardShortcuts () {
+    return {
+      'Shift-Control-7': () => {
+        if (props.selectedCell1.colName !== 'info_status') {
+          editor.value.chain().focus().toggleOrderedList().run()
+        }
+      }
+    }
+  }
+})
+const CustomBulletList = BulletList.extend({
+  addKeyboardShortcuts () {
+    return {
+      'Shift-Control-8': () => {
+        if (props.selectedCell1.colName !== 'info_status') {
+          editor.value.chain().focus().toggleBulletList().run()
+        }
+      }
+    }
+  }
+})
+const CustomTaskList = TaskList.extend({
+  addKeyboardShortcuts () {
+    return {
+      'Shift-Control-9': () => {
+        if (props.selectedCell1.colName !== 'info_status') {
+          editor.value.chain().focus().toggleTaskList().run()
+        }
+      }
+    }
+  }
+})
 
-const initialValue = ref(props.modelValue)
-const newValue = ref(null)
+const emit = defineEmits(['update:modelValue', 'saveCell'])
 
 const btnLoading = ref(false)
 
+const initialValue = ref('')
+const newValue = ref(null)
+
 const editor = useEditor({
   extensions: [
-    StarterKit,
-    Underline,
-    TextAlign.configure({ types: ['heading', 'paragraph'] }),
-    TextStyle,
-    Color,
-    Highlight.configure({ multicolor: true }),
-    TaskList,
+    StarterKit.configure({
+      bulletList: false,
+      orderedList: false
+    }),
+    CustomBulletList,
+    CustomOrderedList,
+    CustomTaskList,
     TaskItem.configure({
       nested: true,
       HTMLAttributes: {
         class: 'myCheckbox'
       }
     }),
+    Underline,
+    TextAlign.configure({ types: ['heading', 'paragraph'] }),
+    TextStyle,
+    Color,
+    Highlight.configure({ multicolor: true }),
     CharacterCount.configure({
       limit: props.charLimit
     })
-    // BulletList
-    // ListItem
   ],
   content: props.modelValue,
   autofocus: false,
+  onCreate: ({ editor }) => {
+    initialValue.value = props.modelValue
+  },
   onUpdate: ({ editor }) => {
     newValue.value = editor.getHTML()
     emit('update:modelValue', newValue.value)
+  },
+  onBlur: ({ editor }) => {
+    editor.commands.setContent(initialValue.value, false)
   }
-})
-
-watch(() => props.selectedCell1, (cell, prevCell) => {
-  // editor.value.commands.setContent(initialValue.value)
-  // newValue.value = null
-  // btnLoading.value = false
 })
 
 function editorAction (action) {
@@ -151,35 +197,32 @@ function editorAction (action) {
 function setFontColor (color) {
   editor.value.chain().focus().setColor(color).run()
 }
+
 function setBgColor (color) {
   editor.value.chain().focus().toggleHighlight({ color: color }).run()
+}
+function unsetBgColor () {
+  editor.value.chain().focus().unsetHighlight().run()
 }
 
 function toggleTask () {
   editor.value.chain().focus().toggleTaskList().run()
 }
 
-// function btnState () {
-//   return editor.value.isActive('bold')
-// }
-
 defineExpose({
+  btnLoading,
   editor,
   editorAction,
-  setFontColor,
+  initialValue,
   setBgColor,
+  setFontColor,
   toggleTask,
-  btnLoading,
-  initialValue
+  unsetBgColor
 })
 
 </script>
 
 <style lang="scss">
-// .is-active {
-//   background: grey;
-//   color: #fff;
-// }
 .ProseMirror {
   padding: 10px;
 

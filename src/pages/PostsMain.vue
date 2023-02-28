@@ -18,23 +18,24 @@
     <template v-slot:body="props">
       <q-tr :props="props" class="tbl-row">
         <!-- № -->
-        <q-td key="id" :props="props" style="height: fit-content;" class="vertical-top">
-          <div v-html="props.row.id" />
+        <q-td key="id" :props="props" class="vertical-top">
+          <div v-html="props.row.id" class="q-py-sm" />
         </q-td>
         <!-- РАСПОЛОЖЕНИЕ -->
-        <q-td key="location" :props="props" style="height: fit-content;" class="vertical-top">
-          <div v-html="props.row.location" />
+        <q-td key="location" :props="props" class="vertical-top">
+          <div v-html="props.row.location" class="q-py-sm" />
         </q-td>
         <!-- СТАТУС (СОСТОЯНИЕ) -->
         <q-td
           key="info_status"
-          :props="props" style="height: fit-content;"
+          :props="props"
           @click="selectCell('info_status', props.row.rId)"
           class="no-padding vertical-top cursor-pointer"
         >
           <TipTapEditor
             v-model="props.row.info_status"
             :ref="(el) => { itemRefs.info_status.push(el) }"
+            :activeCell="isCellActive('info_status', props.row.rId)"
             :selectedCell1 = "selectedCell"
             :charLimit = 20
             @saveCell='saveCell(props.row.info_status, props.cols[2].name, props.row.location)'
@@ -44,7 +45,7 @@
         <!-- ПРИМЕЧАНИЯ -->
         <q-td
           key="info_now_state"
-          :props="props" style="height: fit-content;"
+          :props="props"
           @click="selectCell('info_now_state', props.row.rId)"
           class="no-padding vertical-top cursor-pointer"
         >
@@ -59,7 +60,7 @@
         <!-- ПЛАНИРУЕМЫЙ СРОК ВЫПОЛНЕНИЯ -->
         <q-td
           key="info_due_date"
-          :props="props" style="height: fit-content;"
+          :props="props"
           @click="selectCell('info_due_date', props.row.rId)"
           class="no-padding vertical-top cursor-pointer"
         >
@@ -74,7 +75,7 @@
         <!-- СОСТАВ РАБОТ -->
         <q-td
           key="info_work_sheet"
-          :props="props" style="height: fit-content;"
+          :props="props"
           @click="selectCell('info_work_sheet', props.row.rId)"
           class="no-padding vertical-top cursor-pointer"
         >
@@ -133,7 +134,7 @@ async function getTableData () {
       }
       tableLoading.value = false
       localStorage.setItem('crcPostsTable', response.data.crc)
-      // timer.value = setInterval(() => checkCRC(), 1000)
+      timer.value = setInterval(() => checkCRC(), 1000)
     } else if (response.data.NUM_ERR === -1 || response.data.NUM_ERR === -2) {
       // NUM_ERR === -1: Ошибка входных параметров.
       // NUM_ERR === -2: Пользователь с указанным токеном в настоящее время не существует.
@@ -160,34 +161,34 @@ async function getTableData () {
  * * file_name (string) - Имя таблицы (“users” или “posts”)
  * * crc (number) - Контрольная сумма таблицы
  */
-// async function checkCRC () {
-//   try {
-//     const response = await axios.post('/api', {
-//       RFI: 13,
-//       token: authStore.token,
-//       file_name: 'posts',
-//       crc: Number(localStorage.getItem('crcPostsTable'))
-//     })
-//     if (response.data.RC === -1) {
-//       if (response.data.NUM_ERR === -1 || response.data.NUM_ERR === -2) {
-//         // NUM_ERR === -1: Ошибка входных параметров.
-//         // NUM_ERR === -2: Пользователь с указанным токеном в настоящее время не существует.
-//         console.error(response.data.__ERR)
-//         // !!! РАЗЛОГИНИТЬ
-//       } else if (response.data.NUM_ERR === -3) {
-//         // Запрашиваемая таблица не существует
-//         console.log(response.data.__ERR)
-//       } else if (response.data.NUM_ERR === -4) {
-//         timer.value = clearInterval(timer.value)
-//         // ! ВСПЛЫВАШКА О ТОМ, ЧТО ДАННЫЕ ИЗМЕНИЛИСЬ И НАДО ОБНОВИТЬ ТАБЛИЦУ
-//       }
-//     }
-//   } catch (error) {
-//     timer.value = clearInterval(timer.value)
-//     console.error('!!!!!' + error)
-//     // !!! СДЕЛАТЬ УЛЬТИМАТИВНУЮ ВЫВАЛИВАЛКУ С МОГИЛКОЙ
-//   }
-// }
+async function checkCRC () {
+  try {
+    const response = await axios.post('/api', {
+      RFI: 13,
+      token: authStore.token,
+      file_name: 'posts',
+      crc: Number(localStorage.getItem('crcPostsTable'))
+    })
+    if (response.data.RC === -1) {
+      if (response.data.NUM_ERR === -1 || response.data.NUM_ERR === -2) {
+        // NUM_ERR === -1: Ошибка входных параметров.
+        // NUM_ERR === -2: Пользователь с указанным токеном в настоящее время не существует.
+        console.error(response.data.__ERR)
+        // !!! РАЗЛОГИНИТЬ
+      } else if (response.data.NUM_ERR === -3) {
+        // Запрашиваемая таблица не существует
+        console.log(response.data.__ERR)
+      } else if (response.data.NUM_ERR === -4) {
+        timer.value = clearInterval(timer.value)
+        // ! ВСПЛЫВАШКА О ТОМ, ЧТО ДАННЫЕ ИЗМЕНИЛИСЬ И НАДО ОБНОВИТЬ ТАБЛИЦУ
+      }
+    }
+  } catch (error) {
+    timer.value = clearInterval(timer.value)
+    console.error('!!!!!' + error)
+    // !!! СДЕЛАТЬ УЛЬТИМАТИВНУЮ ВЫВАЛИВАЛКУ С МОГИЛКОЙ
+  }
+}
 
 const itemRefs = reactive({
   info_status: [],
@@ -202,8 +203,8 @@ const selectedCell = reactive({
 })
 /**
  * Установить активную ячейку
- * @param  {string} col - Наименование столбца выбранной ячейки
- * @param  {number} row - Номер строки выбранной ячейки
+ * * col (string) - Наименование столбца выбранной ячейки
+ * * row (number) - Номер строки выбранной ячейки
  */
 function selectCell (col, row) {
   selectedCell.colName = col
@@ -211,9 +212,8 @@ function selectCell (col, row) {
 }
 /**
  * Проверяет, является ли ячейка активной
- * @param  {string} c - Наименование столбца проверяемой ячейки
- * @param  {number} r - Номер строки проверяемой ячейки
- * @return {boolean}
+ * * c (string) - Наименование столбца проверяемой ячейки
+ * * r (number) - Номер строки проверяемой ячейки
  */
 function isCellActive (c, r) {
   return c === selectedCell.colName && r === selectedCell.rowId
@@ -243,8 +243,8 @@ async function saveCell (value, fieldName, location) {
       value
     })
     if (response.data.RC === 0) {
-      itemRefs[selectedCell.colName][selectedCell.rowId].initialValue = value
-      itemRefs[selectedCell.colName][selectedCell.rowId].btnLoading = false
+      // itemRefs[selectedCell.colName][selectedCell.rowId].initialValue = value
+      // itemRefs[selectedCell.colName][selectedCell.rowId].btnLoading = false
       $q.notify({
         type: 'notifyPositive',
         message: `Данные РТП "${location}" обновлены`
@@ -285,6 +285,7 @@ onBeforeUnmount(() => {
 .tbl-row :focus-visible {
   outline: none;
 }
+
 .selectedCell {
   box-shadow: inset 0px 0px 0px 1px $primary;
 }

@@ -10,7 +10,7 @@
       active-class="postActive"
     >
       <q-item-section>
-        <q-item-label class="text-white card-heading">{{ post.location }}</q-item-label>
+        <q-item-label class="text-h6">{{ post.location }}</q-item-label>
         <q-item-label caption class="flex">
           <q-icon
             :name="post.ip ? 'o_location_on' : 'o_not_listed_location'"

@@ -46,6 +46,7 @@
     -->
     <div>
       <q-btn-dropdown
+        v-model="fontColorMenu"
         @click="setFontColor(fontColor)"
         split
         :icon="fontColorIcon"
@@ -56,26 +57,27 @@
         <q-card class="bg-grey-9">
           <q-card-section class="q-pa-sm">
             <div class="column q-gutter-xs">
-              <q-btn align="left" icon="o_format_color_reset" dense flat>Нет цвета!!!1</q-btn>
+              <q-btn
+                @click="fontColor='', setFontColor ('')"
+                align="left"
+                icon="o_format_color_reset"
+                dense
+                flat
+              >Авто</q-btn>
             </div>
             <div v-for="colorArr in colorsPallete" :key="colorArr" class="column q-gutter-xs colorRow">
               <div class="row q-gutter-xs ">
                 <div
                   v-for="color in colorArr" :key="color"
+                  @click="fontColor=color, setFontColor (color), fontColorMenu=false"
                   :style="`background-color: ${color}`"
-                  class="colorBall"
+                  class="colorCell"
+                  :class="{ 'active': fontColor===color }"
                 />
               </div>
             </div>
           </q-card-section>
         </q-card>
-        <!-- <q-color
-          v-model="fontColor"
-          @change="setFontColor(fontColor)"
-          default-view="palette"
-          no-header-tabs
-          no-footer
-        /> -->
       </q-btn-dropdown>
       <q-tooltip transition-show="scale" transition-hide="scale">
         Цвет текста
@@ -95,16 +97,33 @@
         dense
         flat
       >
-        <q-color
-          v-model="bgColor"
-          @change="setBgColor(bgColor)"
-          default-view="palette"
-          no-header-tabs
-          no-footer
-        />
+        <q-card class="bg-grey-9">
+          <q-card-section class="q-pa-sm">
+            <div class="column q-gutter-xs">
+              <q-btn
+                @click="props.itemRefs[props.selectedCell.colName][props.selectedCell.rowId].unsetBgColor()"
+                align="left"
+                icon="o_format_color_reset"
+                dense
+                flat
+              >Нет</q-btn>
+            </div>
+            <div v-for="colorArr in colorsPallete" :key="colorArr" class="column q-gutter-xs colorRow">
+              <div class="row q-gutter-xs ">
+                <div
+                  v-for="color in colorArr" :key="color"
+                  @click="bgColor=color, setBgColor (color)"
+                  :style="`background-color: ${color}`"
+                  class="colorCell"
+                  :class="{ 'active': bgColor===color }"
+                />
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
       </q-btn-dropdown>
       <q-tooltip transition-show="scale" transition-hide="scale">
-        Цвет фона текста
+        Цвет фона
       </q-tooltip>
     </div>
     <q-separator vertical spaced />
@@ -120,6 +139,7 @@
       dense
       flat
       :class="checkActiveClass('lists', btn.action)"
+      :disable="props.selectedCell.colName==='info_status'"
     >
       <q-tooltip transition-show="scale" transition-hide="scale">
         {{btn.tooltip}}
@@ -145,7 +165,7 @@ const editorBtns = {
     { id: 1, icon: 'format_bold', action: 'bold', tooltip: 'Полужирный (Ctrl+B)' },
     { id: 2, icon: 'format_italic', action: 'italic', tooltip: 'Курсив (Ctrl+I)' },
     { id: 3, icon: 'format_underlined', action: 'underline', tooltip: 'Подчеркнутый (Ctrl+U)' },
-    { id: 4, icon: 'strikethrough_s', action: 'strike', tooltip: 'бульп' }
+    { id: 4, icon: 'strikethrough_s', action: 'strike', tooltip: 'Зачеркнутый' }
   ],
   alignText: [
     { id: 5, icon: 'mdi-format-align-left', action: 'left', tooltip: 'Выравнивание по левому краю (Ctrl+Shift+L)' },
@@ -191,19 +211,22 @@ const letterColor = computed(() => {
   return defaultLetterColor
 })
 
-// const fontColor = ref('#ff33ff')
-// const fontColorIcon = computed(() => {
-//   const letter = letterColor.value.replace('#', '%23')
-//   const selectedColor = fontColor.value.replace('#', '%23')
-//   return `img:data:image/svg+xml;charset=utf8,
-//   <svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'>
-//     <path d='M 4.5 48 v -7 h 39 v 7 z ' fill='${selectedColor}'/>
-//     <path d='M 11 34 L 22 6 h 4 l 11 28 h -3.75 l -2.85 -7.5 H 17.6 L 14.75 34 Z m 7.8 -10.7 h 10.4 L 24.1 9.75 h -0.2 Z' fill='${letter}'/>
-//   </svg>`
-// })
-// function setFontColor (fontColor) {
-//   props.itemRefs[props.selectedCell.colName][props.selectedCell.rowId].setFontColor(fontColor)
-// }
+const fontColorMenu = ref(false)
+const fontColor = ref('#cc0000')
+const fontColorIcon = computed(() => {
+  const letter = letterColor.value.replace('#', '%23')
+  const selectedColor = fontColor.value.replace('#', '%23')
+  return `img:data:image/svg+xml;charset=utf8,
+  <svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'>
+    <path d='M 4.5 48 v -7 h 39 v 7 z ' fill='${selectedColor}'/>
+    <path d='M 11 34 L 22 6 h 4 l 11 28 h -3.75 l -2.85 -7.5 H 17.6 L 14.75 34 Z m 7.8 -10.7 h 10.4 L 24.1 9.75 h -0.2 Z' fill='${letter}'/>
+  </svg>`
+})
+function setFontColor (fontColor) {
+  if (props.selectedCell.colName !== '') {
+    props.itemRefs[props.selectedCell.colName][props.selectedCell.rowId].setFontColor(fontColor)
+  }
+}
 
 const bgColor = ref('#FFF176')
 const bgColorIcon = computed(() => {
@@ -216,7 +239,9 @@ const bgColorIcon = computed(() => {
   </svg>`
 })
 function setBgColor (bgColor) {
-  props.itemRefs[props.selectedCell.colName][props.selectedCell.rowId].setBgColor(bgColor)
+  if (props.selectedCell.colName !== '') {
+    props.itemRefs[props.selectedCell.colName][props.selectedCell.rowId].setBgColor(bgColor)
+  }
 }
 
 // function toggleTask () {
@@ -249,10 +274,9 @@ function setBgColor (bgColor) {
   padding-bottom: 5px;
 }
 
-.colorBall {
+.colorCell {
   width: 20px;
   height: 20px;
-  // border-radius: 50%;
   cursor: pointer;
 
   &:hover {
@@ -261,6 +285,10 @@ function setBgColor (bgColor) {
 
   &.noColor {
     outline: 1px solid white;
+  }
+
+  &.active {
+    outline: 1.5px solid red;
   }
 }
 
