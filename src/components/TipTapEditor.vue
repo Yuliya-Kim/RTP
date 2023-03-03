@@ -1,5 +1,5 @@
 <template>
-  <div v-if="editor" class="q-py-sm">
+  <div v-if="editor" style="height: 100%;">
     <transition
       appear
       enter-active-class="animated fadeIn"
@@ -18,7 +18,7 @@
         <q-icon name="mdi-floppy" />
       </q-btn>
     </transition>
-    <editor-content :editor="editor" />
+    <editor-content :editor="editor" style="height: 100%;" />
     <q-chip
       v-show="activeCell && charLimit !== 0"
       class="q-pa-none absolute-top-right"
@@ -224,6 +224,7 @@ defineExpose({
 
 <style lang="scss">
 .ProseMirror {
+  height: 100%;
   padding: 10px;
 
   ul, ol { padding: 0 1rem; }

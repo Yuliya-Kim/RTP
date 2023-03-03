@@ -11,21 +11,38 @@
     hide-bottom
     v-model:pagination="pagination"
     separator="cell"
-    class="q-ma-md"
+    class="posts-table q-ma-md"
+    color="secondary"
     bordered
     flat
   >
+  <!-- style="height: max-content" -->
     <template v-slot:body="props">
-      <q-tr :props="props" class="tbl-row">
-        <!-- № -->
-        <q-td key="id" :props="props" class="vertical-top">
+      <q-tr :props="props" class="posts-table__tr" >
+        <q-td
+          v-for="(col) in headers" :key="col.name" :props="props"
+          @click="selectCell(col.name, props.rowIndex)"
+          class="posts-table_td no-padding vertical-top cursor-pointer"
+        >
+          <TipTapEditor
+            v-model="props.row[col.name]"
+            :ref="(el) => { itemRefs[col.name].push(el) }"
+            :activeCell="isCellActive(col.name, props.rowIndex)"
+            :selectedCell1 = "selectedCell"
+            @saveCell='saveCell(props.row[col.name], col.name, props.row.location)'
+            style="height: 100%"
+            :class="{ 'selectedCell': isCellActive(col.name, props.rowIndex) }"
+          />
+        </q-td>
+
+        <!-- <q-td key="id" :props="props" class="vertical-top">
           <div v-html="props.row.id" class="q-py-sm" />
         </q-td>
-        <!-- РАСПОЛОЖЕНИЕ -->
+
         <q-td key="location" :props="props" class="vertical-top">
           <div v-html="props.row.location" class="q-py-sm" />
         </q-td>
-        <!-- СТАТУС (СОСТОЯНИЕ) -->
+
         <q-td
           key="info_status"
           :props="props"
@@ -42,7 +59,7 @@
             :class="{ 'selectedCell': isCellActive('info_status', props.row.rId) }"
           />
         </q-td>
-        <!-- ПРИМЕЧАНИЯ -->
+
         <q-td
           key="info_now_state"
           :props="props"
@@ -57,7 +74,7 @@
             :class="{ 'selectedCell': isCellActive('info_now_state', props.row.rId) }"
           />
         </q-td>
-        <!-- ПЛАНИРУЕМЫЙ СРОК ВЫПОЛНЕНИЯ -->
+
         <q-td
           key="info_due_date"
           :props="props"
@@ -72,7 +89,7 @@
             :class="{ 'selectedCell': isCellActive('info_due_date', props.row.rId) }"
           />
         </q-td>
-        <!-- СОСТАВ РАБОТ -->
+
         <q-td
           key="info_work_sheet"
           :props="props"
@@ -86,7 +103,7 @@
             @saveCell='saveCell(props.row.info_work_sheet, props.cols[5].name, props.row.location)'
             :class="{ 'selectedCell': isCellActive('info_work_sheet', props.row.rId) }"
           />
-        </q-td>
+        </q-td> -->
       </q-tr>
     </template>
   </q-table>
@@ -95,10 +112,11 @@
 <script setup>
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useQuasar } from 'quasar'
-import { axios } from 'boot/axios'
-import { useAuthStore } from '../stores/auth'
 // import { notifyPositive } from 'boot/myNotify'
-// import { usePostsStore } from '../stores/posts'
+import { axios } from 'boot/axios'
+
+import { useAuthStore } from '../stores/auth'
+
 import PostsTableToolbar from '../components/PostsTable__toolbar.vue'
 import TipTapEditor from '../components/TipTapEditor.vue'
 
@@ -122,26 +140,27 @@ const timer = ref(null)
  * Запрос данных о постах
  * * RFI (number) - Номер запроса - 9
  * * token (string) - Токен текущего пользователя
+ * ---
+ * NUM_ERR === -1: Ошибка входных параметров
+ * NUM_ERR === -2: Пользователь с указанным токеном в настоящее время не существует
+ * NUM_ERR === -3: Ошибка запроса к базе данных
  */
 async function getTableData () {
+  console.log('s')
   tableLoading.value = true
   try {
     const response = await axios.post('/api', { RFI: 9, token: authStore.token })
     if (response.data.RC === 0) {
       posts.value = response.data.apks_info
-      for (let i = 0; i < posts.value.length; i += 1) {
-        posts.value[i].rId = i
-      }
+      // posts.value = response.data.apks_info.map((post, i) => ({ rId: i, ...post }))
       tableLoading.value = false
       localStorage.setItem('crcPostsTable', response.data.crc)
       timer.value = setInterval(() => checkCRC(), 1000)
+      console.log('f')
     } else if (response.data.NUM_ERR === -1 || response.data.NUM_ERR === -2) {
-      // NUM_ERR === -1: Ошибка входных параметров.
-      // NUM_ERR === -2: Пользователь с указанным токеном в настоящее время не существует.
       console.error(response.data.__ERR)
       // !!! РАЗЛОГИНИТЬ
     } else if (response.data.NUM_ERR === -3) {
-      // Ошибка запроса к базе данных.
       console.group('Ошибка запроса к базе данных')
       console.log(response.data.__ERR)
       console.log(response.data.message)
@@ -191,6 +210,8 @@ async function checkCRC () {
 }
 
 const itemRefs = reactive({
+  id: [],
+  location: [],
   info_status: [],
   info_now_state: [],
   info_due_date: [],
@@ -282,7 +303,17 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
-.tbl-row :focus-visible {
+.posts-table {
+  max-height: 100vh;
+  .posts-table__tr {
+    height: 100%;
+  }
+  .posts-table_td {
+    height: 100%;
+  }
+}
+
+.posts-table__tr :focus-visible {
   outline: none;
 }
 
