@@ -6,7 +6,7 @@
       leave-active-class="animated fadeOut"
     >
       <q-btn
-        v-show="newValue && newValue != initialValue"
+        v-show="newValue && (newValue != initialValue)"
         @click="emit('saveCell')"
         dense
         flat
@@ -36,6 +36,8 @@
 
 import { ref } from 'vue'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
+// import VueComponent from './Extension.js'
+
 import StarterKit from '@tiptap/starter-kit'
 import BulletList from '@tiptap/extension-bullet-list'
 import OrderedList from '@tiptap/extension-ordered-list'
@@ -58,9 +60,13 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  selectedCell1: {
+  selectedCell: {
     type: Object,
     default: null
+  },
+  editable: {
+    type: Boolean,
+    default: true
   },
   charLimit: {
     type: Number,
@@ -72,7 +78,7 @@ const CustomOrderedList = OrderedList.extend({
   addKeyboardShortcuts () {
     return {
       'Shift-Control-7': () => {
-        if (props.selectedCell1.colName !== 'info_status') {
+        if (props.selectedCell.colName !== 'info_status') {
           editor.value.chain().focus().toggleOrderedList().run()
         }
       }
@@ -83,7 +89,7 @@ const CustomBulletList = BulletList.extend({
   addKeyboardShortcuts () {
     return {
       'Shift-Control-8': () => {
-        if (props.selectedCell1.colName !== 'info_status') {
+        if (props.selectedCell.colName !== 'info_status') {
           editor.value.chain().focus().toggleBulletList().run()
         }
       }
@@ -94,7 +100,7 @@ const CustomTaskList = TaskList.extend({
   addKeyboardShortcuts () {
     return {
       'Shift-Control-9': () => {
-        if (props.selectedCell1.colName !== 'info_status') {
+        if (props.selectedCell.colName !== 'info_status') {
           editor.value.chain().focus().toggleTaskList().run()
         }
       }
@@ -111,6 +117,7 @@ const newValue = ref(null)
 
 const editor = useEditor({
   extensions: [
+    // VueComponent,
     StarterKit.configure({
       bulletList: false,
       orderedList: false
@@ -134,16 +141,18 @@ const editor = useEditor({
     })
   ],
   content: props.modelValue,
+  editable: props.editable,
   autofocus: false,
   onCreate: ({ editor }) => {
-    initialValue.value = props.modelValue
+    // initialValue.value = props.modelValue
   },
   onUpdate: ({ editor }) => {
+    console.log(initialValue.value)
     newValue.value = editor.getHTML()
     emit('update:modelValue', newValue.value)
   },
   onBlur: ({ editor }) => {
-    editor.commands.setContent(initialValue.value, false)
+    // editor.commands.setContent(initialValue.value, false)
   }
 })
 
