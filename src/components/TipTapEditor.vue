@@ -56,6 +56,10 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  // originalValue: {
+  //   type: String,
+  //   default: ''
+  // },
   activeCell: {
     type: Boolean,
     default: false
@@ -112,7 +116,8 @@ const emit = defineEmits(['update:modelValue', 'saveCell'])
 
 const btnLoading = ref(false)
 
-const initialValue = ref('')
+// const initialValue = ref('')
+const initialValue = ref(props.modelValue)
 const newValue = ref(null)
 
 const editor = useEditor({
@@ -144,10 +149,10 @@ const editor = useEditor({
   editable: props.editable,
   autofocus: false,
   onCreate: ({ editor }) => {
-    // initialValue.value = props.modelValue
+    //
   },
   onUpdate: ({ editor }) => {
-    console.log(initialValue.value)
+    console.log('initialValue.value' + initialValue.value)
     newValue.value = editor.getHTML()
     emit('update:modelValue', newValue.value)
   },

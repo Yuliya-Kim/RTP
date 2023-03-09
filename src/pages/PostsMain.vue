@@ -26,6 +26,7 @@
           <TipTapEditor
             v-model="props.row[col.name]"
             :ref="(el) => { itemRefs[col.name].push(el) }"
+            :key="props.row.id"
             :editable="col.name === 'id' || col.name ==='location' ? false : true"
             :activeCell="isCellActive(col.name, props.rowIndex)"
             :selectedCell = "selectedCell"
@@ -35,7 +36,7 @@
         </q-td>
       </q-tr>
     </template>
-  </q-table>
+  </q-table>{{posts}}
 </template>
 
 <script setup>
@@ -63,6 +64,7 @@ const headers = [
   { name: 'info_work_sheet', label: 'Состав работ', field: 'info_work_sheet', sortable: false, align: 'left' }
 ]
 const posts = ref([])
+const postsInitial = ref([])
 
 const timer = ref(null)
 const itemRefs = reactive({
@@ -73,6 +75,7 @@ const itemRefs = reactive({
   info_due_date: [],
   info_work_sheet: []
 })
+
 /**
  * Запрос данных о постах
  * * RFI (number) - Номер запроса - 9
@@ -86,10 +89,10 @@ async function getTableData () {
   try {
     const response = await axios.post('/api', { RFI: 9, token: authStore.token })
     if (response.data.RC === 0) {
+      console.log('prprprprprp')
       posts.value = response.data.apks_info
-      Object.keys(itemRefs).forEach(function (key) {
-        console.log(itemRefs[key].length)
-      })
+      postsInitial.value = response.data.apks_info
+
       tableLoading.value = false
       localStorage.setItem('crcPosts', response.data.crc)
       timer.value = setInterval(() => checkCRC(), 1000)
