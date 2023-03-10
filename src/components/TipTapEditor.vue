@@ -56,10 +56,10 @@ const props = defineProps({
     type: String,
     default: ''
   },
-  // originalValue: {
-  //   type: String,
-  //   default: ''
-  // },
+  originalValue: {
+    type: String,
+    default: ''
+  },
   activeCell: {
     type: Boolean,
     default: false
@@ -122,7 +122,6 @@ const newValue = ref(null)
 
 const editor = useEditor({
   extensions: [
-    // VueComponent,
     StarterKit.configure({
       bulletList: false,
       orderedList: false
@@ -152,7 +151,7 @@ const editor = useEditor({
     //
   },
   onUpdate: ({ editor }) => {
-    console.log('initialValue.value' + initialValue.value)
+    console.log(props.originalValue)
     newValue.value = editor.getHTML()
     emit('update:modelValue', newValue.value)
   },

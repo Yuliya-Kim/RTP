@@ -6,7 +6,7 @@
   <q-table
     :loading="tableLoading"
     :columns="headers"
-    :rows="posts"
+    :rows="table"
     row-key="id"
     hide-bottom
     v-model:pagination="pagination"
@@ -17,7 +17,7 @@
     flat
   >
     <template v-slot:body="props">
-      <q-tr :props="props" class="posts-table__tr" >
+      <q-tr :props="props" class="posts-table__tr">
         <q-td
           v-for="(col) in headers" :key="col.name" :props="props"
           @click="selectCell(col.name, props.rowIndex)"
@@ -25,6 +25,7 @@
         >
           <TipTapEditor
             v-model="props.row[col.name]"
+            :originalValue="tableInitial.filter(post => { return post.id === props.row.id })[0][col.name]"
             :ref="(el) => { itemRefs[col.name].push(el) }"
             :key="props.row.id"
             :editable="col.name === 'id' || col.name ==='location' ? false : true"
@@ -36,22 +37,25 @@
         </q-td>
       </q-tr>
     </template>
-  </q-table>{{posts}}
+  </q-table>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useQuasar } from 'quasar'
 // import { notifyPositive } from 'boot/myNotify'
 import { axios } from 'boot/axios'
 
+// import { storeToRefs } from 'pinia'
 import { useAuthStore } from '../stores/auth'
+import { useTableStore } from '../stores/postsTable'
 
 import PostsTableToolbar from '../components/PostsTable__toolbar.vue'
 import TipTapEditor from '../components/TipTapEditor.vue'
 
 const $q = useQuasar()
 const authStore = useAuthStore()
+const tableStore = useTableStore()
 
 const tableLoading = ref(true)
 const pagination = { rowsPerPage: 0 }
@@ -63,8 +67,9 @@ const headers = [
   { name: 'info_due_date', label: 'Планируемый срок выполнения', field: 'info_due_date', sortable: false, align: 'left' },
   { name: 'info_work_sheet', label: 'Состав работ', field: 'info_work_sheet', sortable: false, align: 'left' }
 ]
-const posts = ref([])
-const postsInitial = ref([])
+const table = computed(() => tableStore.table)
+const tableInitial = computed(() => tableStore.tableInitial)
+// const posts = ref([])
 
 const timer = ref(null)
 const itemRefs = reactive({
@@ -87,31 +92,17 @@ const itemRefs = reactive({
 async function getTableData () {
   tableLoading.value = true
   try {
-    const response = await axios.post('/api', { RFI: 9, token: authStore.token })
-    if (response.data.RC === 0) {
-      console.log('prprprprprp')
-      posts.value = response.data.apks_info
-      postsInitial.value = response.data.apks_info
-
-      tableLoading.value = false
-      localStorage.setItem('crcPosts', response.data.crc)
-      timer.value = setInterval(() => checkCRC(), 1000)
-    } else if (response.data.NUM_ERR === -1 || response.data.NUM_ERR === -2) {
-      console.error(response.data.__ERR)
-      // ! РАЗЛОГИНИТЬ
-    } else if (response.data.NUM_ERR === -3) {
-      console.group('Ошибка запроса к базе данных')
-      console.log(response.data.__ERR)
-      console.log(response.data.message)
-      console.groupEnd()
-      // ! ВСПЛЫВАШКА С __ERR
-    }
+    await tableStore.getData()
+    // posts.value = tableStore.table
+    tableLoading.value = false
+    timer.value = setInterval(() => checkCRC(), 1000)
   } catch (err) {
     console.error(err)
     // ! СДЕЛАТЬ УЛЬТИМАТИВНУЮ ВЫВАЛИВАЛКУ С МОГИЛКОЙ
   }
 }
 
+// const { table, tableInitial } = storeToRefs(tableStore)
 /**
  * Проверка CRC таблицы постов
  * * RFI (number) - Номер запроса - 13
